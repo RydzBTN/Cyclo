@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Cyclo.Api/Cyclo.Api.csproj" />
+    <Project Path="src/Cyclo.Core/Cyclo.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Cyclo.Core.Tests/Cyclo.Core.Tests.csproj" />
+  </Folder>
+</Solution>
