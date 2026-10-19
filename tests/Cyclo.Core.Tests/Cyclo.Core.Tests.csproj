@@ -18,4 +18,8 @@
         <Using Include="Xunit"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\..\src\Cyclo.Core\Cyclo.Core.csproj" />
+    </ItemGroup>
+
 </Project>
