@@ -5,4 +5,4 @@ public readonly record struct TrackPoint(
     DateTimeOffset Time,
     float? Elevation = null,
     float? Temperature = null,
-    byte? HeartRate = null);
+    int? HeartRate = null);

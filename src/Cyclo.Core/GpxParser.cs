@@ -23,7 +23,7 @@ public static class GpxParser
             
             float? elevation = (float?)docPoint.Element(gpx + "ele");
             float? temperature = (float?)docPoint.Element(gpx + "extensions")?.Element(garmin + "TrackPointExtension")?.Element(garmin + "atemp");
-            byte? heartRate = (byte?)(int?)docPoint.Element(gpx + "extensions")?.Element(garmin + "TrackPointExtension")?.Element(garmin + "hr");
+            int? heartRate = (int?)docPoint.Element(gpx + "extensions")?.Element(garmin + "TrackPointExtension")?.Element(garmin + "hr");
             
             TrackPoint point = new TrackPoint(new Coordinates(lat.Value, lon.Value), time.Value, elevation, temperature, heartRate);
             
