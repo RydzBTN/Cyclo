@@ -3,6 +3,9 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+# Cyclo: private ride files (real GPS tracks)
+tests/Cyclo.Core.Tests/TestData/Private/
+
 # dotenv files
 .env
 

@@ -9,7 +9,9 @@ public static class ActivityAnalyzer
         
         ActivitySummary summary = new ActivitySummary(
             GetDistance(points),
-            GetTotalTime(points)
+            GetTotalTime(points),
+            GetAvgHeartRate(points),
+            GetMaxHeartRate(points)
             );
         
         return summary;
@@ -30,5 +32,15 @@ public static class ActivityAnalyzer
     private static TimeSpan GetTotalTime(IReadOnlyList<TrackPoint> points)
     {
         return points[^1].Time -  points[0].Time;
+    }
+
+    private static int? GetAvgHeartRate(IReadOnlyList<TrackPoint> points)
+    {
+        return (int?)points.Average(p => p.HeartRate);
+    }
+
+    private static int? GetMaxHeartRate(IReadOnlyList<TrackPoint> points)
+    {
+        return points.Max(p => p.HeartRate);
     }
 }
