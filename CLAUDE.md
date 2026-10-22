@@ -57,3 +57,18 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie, splity i surowy plik.
 
 Świadomie POMIJAMY na tym etapie: CQRS/MediatR, Transactional Outbox, Dapper, Redis, mikroserwisy, pełną Clean Architecture.
 
+## Dziennik postępów
+
+### Dzień 1 - 2026-10-19
+- Referencje projektów, sprzątanie szablonu. FIT odłożony – zostajemy przy GPX.
+- `Coordinates`, `GeoMath.HaversineMeters` + testy.
+- `TrackPoint` (struct, pola opcjonalne nullable), `GpxParser` + testy.
+
+### Dzień 2 - 2026-10-20
+- `docs/concepts-guide.md` – przewodnik po zagadnieniach z planu.
+- `ActivitySummary` + `ActivityAnalyzer` (dystans, czas całkowity) + testy. 38/38 zielonych.
+
+### Dzień 3 - 22.10.2026
+- Heart Rate - średnia i max
+- metoda wykrywająca pauzy `isPause`
+- prawdziwy: czas aktywności `ActivityTime`, dystans `ActivityDistance` i średnia prędkość `AvgSpeed`
