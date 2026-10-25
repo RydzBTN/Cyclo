@@ -17,7 +17,7 @@ public static class GpxParser
         {
             double? lat = (double?)docPoint.Attribute("lat");
             double? lon = (double?)docPoint.Attribute("lon");
-            DateTimeOffset? time = (DateTimeOffset?)docPoint.Element(gpx +"time");
+            DateTimeOffset? time = (DateTimeOffset?)docPoint.Element(gpx + "time");
             
             if(lat == null || lon == null || time == null) continue;
             
@@ -26,7 +26,6 @@ public static class GpxParser
             int? heartRate = (int?)docPoint.Element(gpx + "extensions")?.Element(garmin + "TrackPointExtension")?.Element(garmin + "hr");
             
             TrackPoint point = new TrackPoint(new Coordinates(lat.Value, lon.Value), time.Value, elevation, temperature, heartRate);
-            
             points.Add(point);
         }
         

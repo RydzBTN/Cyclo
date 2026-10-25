@@ -18,7 +18,7 @@ REST API do analizy telemetrii z jazdy rowerem (jak podsumowanie treningu w Garm
 1. `POST /activities` – upload pliku GPX → walidacja, hash SHA-256, rekord `Pending`, od razu `202 Accepted` + `Location`.
 2. Przetwarzanie w tle: `BoundedChannel<T>` + `BackgroundService` → parsowanie, filtrowanie szumu, metryki, zapis.
 3. `GET /activities/{id}` – status (`Pending/Processing/Completed/Failed`) + wyniki.
-4. `GET /activities` (paginacja), `GET /activities/{id}/splits` (podział na km).
+4. `GET /activities` (paginacja)
 
 Metryki: dystans (haversine), czas całkowity i czas ruchu (auto-pause), przewyższenie (wygładzanie + histereza),
 najlepsze odcinki (1 km, 5 km, 20 min – okno przesuwne O(n)), tętno/kadencja/moc z rozszerzeń Garmina (`gpxtpx`).
@@ -32,6 +32,12 @@ Najpierw GPX (XML), FIT ewentualnie na końcu.
 - Deduplikacja: unikalny indeks `(UserId, FileHash)`, `DbUpdateException` → `409`.
 - `RowVersion` na `Activity` (np. `POST /activities/{id}/reprocess`).
 - Globalna obsługa błędów (`IExceptionHandler` / `ProblemDetails`), JWT z rolami, walidacja, DTO.
+
+## Bezpieczeństwo – minimum (bez osobnego tygodnia, przy okazji tygodnia 2)
+- Parser GPX: `XmlReader` z `DtdProcessing.Prohibit` (ochrona przed XXE).
+- Limit rozmiaru uploadu.
+- Użytkownik widzi tylko SWOJE aktywności (cudzy id → `404`).
+- Klucz JWT poza repo (user-secrets), brak stack trace’ów w odpowiedziach poza Development.
 
 ## Struktura
 ```
@@ -53,7 +59,7 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie, splity i surowy plik.
 | 3 | Channel + BackgroundService, odtwarzanie po restarcie, semafor, cancellation |
 | 4 | Testcontainers (prawdziwy SQL Server), Docker Compose, GitHub Actions (build + test) |
 | 5 | Benchmark: `XDocument`+`Split`+LINQ vs `XmlReader`+`ReadOnlySpan<char>` (`[MemoryDiagnoser]`), README z diagramem Mermaid i sekcją „Wyzwania i rozwiązania” |
-| 6 | Bufor, ewentualnie Azure |
+| 6 | Bufor. Opcjonalnie: jeden prosty deploy na Azure (Container Apps + Azure SQL) przez Azure CLI, z budżetem i alertem kosztów; po wszystkim usunięcie grupy zasobów |
 
 Świadomie POMIJAMY na tym etapie: CQRS/MediatR, Transactional Outbox, Dapper, Redis, mikroserwisy, pełną Clean Architecture.
 
@@ -72,3 +78,9 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie, splity i surowy plik.
 - Heart Rate - średnia i max
 - metoda wykrywająca pauzy `isPause`
 - prawdziwy: czas aktywności `ActivityTime`, dystans `ActivityDistance` i średnia prędkość `AvgSpeed`
+
+### Dzień 4 - 25.10.2026
+- Elewacja
+- Best Segment dla 1/5/10 Km - liczy najszybszy odcinek 
+- GetBestSegmentFast zlozoność (O(n) zamiast O(n²) w GetBestSegment)
+- Skończone założenia Cyclo.Core
