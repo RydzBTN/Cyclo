@@ -22,7 +22,7 @@ src/Cyclo.Api      – Web API na kontrolerach, EF Core, SQL Server, JWT, Backgr
 tests/Cyclo.Core.Tests – xUnit
 ```
 
-## Cycling tests
+## Running tests
 ```bash
 dotnet test --filter "Category!=LocalData"
 ```
