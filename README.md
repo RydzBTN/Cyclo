@@ -36,7 +36,7 @@ src/Cyclo.Api      – Web API with controllers, EF Core, SQL Server, JWT, Backg
 tests/Cyclo.Core.Tests – xUnit
 ```
 
-## Cycling tests
+## Running tests
 `LocalData` - tests on a private GPS file, not included in the repo
 ```bash
 dotnet test --filter "Category!=LocalData"
