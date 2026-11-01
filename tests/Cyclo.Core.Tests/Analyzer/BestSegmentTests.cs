@@ -97,7 +97,7 @@ public class BestSegmentTests(ITestOutputHelper output) : AnalyzerTestBase(outpu
 
         ActivitySummary summary = ActivityAnalyzer.Analyze(points);
 
-        foreach (var (name, segment) in new[] { ("1 km", Best1km: summary.Best1Km), ("5 km", Best5km: summary.Best5Km), ("10 km", Best10km: summary.Best10Km) })
+        foreach (var (name, segment) in new[] { ("1 km", summary.Best1Km), ("5 km", summary.Best5Km), ("10 km", summary.Best10Km) })
         {
             Output.WriteLine(segment is null
                 ? $"Best {name}: none"

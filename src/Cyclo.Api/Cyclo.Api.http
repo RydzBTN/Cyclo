@@ -1,6 +1,6 @@
 @Cyclo.Api_HostAddress = http://localhost:5118
 
-GET http://localhost:5118/weatherforecast/
+GET http://localhost:5118/activities/33
 Accept: application/json
 
 ###

@@ -21,7 +21,7 @@ REST API do analizy telemetrii z jazdy rowerem (jak podsumowanie treningu w Garm
 4. `GET /activities` (paginacja)
 
 Metryki: dystans (haversine), czas całkowity i czas ruchu (auto-pause), przewyższenie (wygładzanie + histereza),
-najlepsze odcinki (1 km, 5 km, 20 min – okno przesuwne O(n)), tętno/kadencja/moc z rozszerzeń Garmina (`gpxtpx`).
+najlepsze odcinki (1 km, 5 km, 10 km – okno przesuwne O(n)), tętno/kadencja/moc z rozszerzeń Garmina (`gpxtpx`).
 Najpierw GPX (XML), FIT ewentualnie na końcu.
 
 ## Mechanizmy do stworzenia
@@ -49,7 +49,7 @@ tests/Cyclo.Core.Tests – xUnit
 ```
 Zależności: Api → Core, Tests → Core. Core nie zna Api.
 .NET 10, Rider, kontrolery (`[ApiController]`), nie Minimal API.
-Punkty GPS nie trafiają do bazy – tylko podsumowanie, splity i surowy plik.
+Punkty GPS nie trafiają do bazy – tylko podsumowanie,  i surowy plik.
 
 ## Plan
 | Tydzień | Zakres |
@@ -58,29 +58,51 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie, splity i surowy plik.
 | 2 | API: upload/202/status, EF Core + migracje, JWT, walidacja, obsługa błędów, OpenAPI UI (Scalar/Swashbuckle) |
 | 3 | Channel + BackgroundService, odtwarzanie po restarcie, semafor, cancellation |
 | 4 | Testcontainers (prawdziwy SQL Server), Docker Compose, GitHub Actions (build + test) |
-| 5 | Benchmark: `XDocument`+`Split`+LINQ vs `XmlReader`+`ReadOnlySpan<char>` (`[MemoryDiagnoser]`), README z diagramem Mermaid i sekcją „Wyzwania i rozwiązania” |
+| 5 | Benchmark: `XDocument`+LINQ vs `XmlReader`+`ReadOnlySpan<char>` (`[MemoryDiagnoser]`), README z diagramem Mermaid i sekcją „Wyzwania i rozwiązania” |
 | 6 | Bufor. Opcjonalnie: jeden prosty deploy na Azure (Container Apps + Azure SQL) przez Azure CLI, z budżetem i alertem kosztów; po wszystkim usunięcie grupy zasobów |
 
 Świadomie POMIJAMY na tym etapie: CQRS/MediatR, Transactional Outbox, Dapper, Redis, mikroserwisy, pełną Clean Architecture.
 
 ## Dziennik postępów
 
-### Dzień 1 - 2026-10-19
+### Dzień 1
 - Referencje projektów, sprzątanie szablonu. FIT odłożony – zostajemy przy GPX.
 - `Coordinates`, `GeoMath.HaversineMeters` + testy.
 - `TrackPoint` (struct, pola opcjonalne nullable), `GpxParser` + testy.
 
-### Dzień 2 - 2026-10-20
+### Dzień 2
 - `docs/concepts-guide.md` – przewodnik po zagadnieniach z planu.
 - `ActivitySummary` + `ActivityAnalyzer` (dystans, czas całkowity) + testy. 38/38 zielonych.
 
-### Dzień 3 - 22.10.2026
+### Dzień 3
 - Heart Rate - średnia i max
 - metoda wykrywająca pauzy `isPause`
 - prawdziwy: czas aktywności `ActivityTime`, dystans `ActivityDistance` i średnia prędkość `AvgSpeed`
 
-### Dzień 4 - 25.10.2026
+### Dzień 4
 - Elewacja
 - Best Segment dla 1/5/10 Km - liczy najszybszy odcinek 
 - GetBestSegmentFast zlozoność (O(n) zamiast O(n²) w GetBestSegment)
 - Skończone założenia Cyclo.Core
+
+### Dzień 5
+- Start API: pierwszy kontroler `ActivityController`
+- Encje bazy: `ActivityEntity`, `ActivitySummaryEntity`, `BestSegmentEntity`, `ProcessStatus` (oddzielone od modeli z Core).
+- SQL Server w Dockerze.
+- Connection string w user secrets
+- `CycloDbContext`: podsumowanie i najlepsze odcinki jako owned types (jedna tabela), status jako tekst
+- Indeksy: unikalny `(UserId, FileHash)` – blokuje duplikaty plików, zwykły `(UserId, UploadedAt)` – pod listę aktywności.
+- Pierwsza migracja `InitialCreate`, baza `Cyclo` z tabelą `Activities`.
+
+
+
+
+
+
+
+
+
+
+
+
+
