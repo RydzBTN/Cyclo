@@ -15,7 +15,7 @@ Cyclo to projekt portfolio: ma nauczyć mnie radzenia sobie z problemami system�
 
 ## Co robi aplikacja
 REST API do analizy telemetrii z jazdy rowerem (jak podsumowanie treningu w Garminie).
-1. `POST /activities` – upload pliku GPX → walidacja, hash SHA-256, rekord `Pending`, od razu `202 Accepted` + `Location`.
+1. `POST /activities` – upload pliku GPX → walidacja, hash SHA-256 z pliku przed kompresją, rekord `Pending`, od razu `202 Accepted` + `Location`.
 2. Przetwarzanie w tle: `BoundedChannel<T>` + `BackgroundService` → parsowanie, filtrowanie szumu, metryki, zapis.
 3. `GET /activities/{id}` – status (`Pending/Processing/Completed/Failed`) + wyniki.
 4. `GET /activities` (paginacja)
@@ -93,6 +93,7 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie,  i surowy plik.
 - `CycloDbContext`: podsumowanie i najlepsze odcinki jako owned types (jedna tabela), status jako tekst
 - Indeksy: unikalny `(UserId, FileHash)` – blokuje duplikaty plików, zwykły `(UserId, UploadedAt)` – pod listę aktywności.
 - Pierwsza migracja `InitialCreate`, baza `Cyclo` z tabelą `Activities`.
+- encja dla plików .gpx z relacją 1:1 do `ActivityEntity`.
 
 
 

@@ -40,6 +40,9 @@ namespace Cyclo.Api.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<long>("OriginalSizeBytes")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTimeOffset?>("ProcessingEndedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -54,8 +57,10 @@ namespace Cyclo.Api.Migrations
                     b.Property<DateTimeOffset>("UploadedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.HasKey("Id");
 
@@ -65,6 +70,20 @@ namespace Cyclo.Api.Migrations
                     b.HasIndex("UserId", "UploadedAt");
 
                     b.ToTable("Activities", (string)null);
+                });
+
+            modelBuilder.Entity("Cyclo.Api.Models.Entities.ActivityFileEntity", b =>
+                {
+                    b.Property<Guid>("ActivityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("Data")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.HasKey("ActivityId");
+
+                    b.ToTable("ActivityFiles", (string)null);
                 });
 
             modelBuilder.Entity("Cyclo.Api.Models.Entities.ActivityEntity", b =>
@@ -179,6 +198,15 @@ namespace Cyclo.Api.Migrations
                         });
 
                     b.Navigation("Summary");
+                });
+
+            modelBuilder.Entity("Cyclo.Api.Models.Entities.ActivityFileEntity", b =>
+                {
+                    b.HasOne("Cyclo.Api.Models.Entities.ActivityEntity", null)
+                        .WithOne()
+                        .HasForeignKey("Cyclo.Api.Models.Entities.ActivityFileEntity", "ActivityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

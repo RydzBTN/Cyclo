@@ -8,6 +8,7 @@ public class CycloDbContext : DbContext
     public CycloDbContext(DbContextOptions<CycloDbContext> options) : base(options) {}
     
     public DbSet<ActivityEntity> Activities => Set<ActivityEntity>();
+    public DbSet<ActivityFileEntity> ActivityFiles => Set<ActivityFileEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -15,6 +16,7 @@ public class CycloDbContext : DbContext
         {
             activity.ToTable("Activities");
             activity.HasKey(x => x.Id);
+            activity.Property(x => x.UserId).HasMaxLength(200);
             activity.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
             activity.Property(x => x.FileName).HasMaxLength(255);
             activity.Property(x => x.FileHash).IsUnicode(false).HasMaxLength(64).IsFixedLength();
@@ -28,6 +30,17 @@ public class CycloDbContext : DbContext
             
             activity.HasIndex(x => new { x.UserId, x.FileHash }).IsUnique(); // deduplication
             activity.HasIndex(x => new { x.UserId, x.UploadedAt });
+        });
+
+        modelBuilder.Entity<ActivityFileEntity>(file =>
+        {
+            file.ToTable("ActivityFiles");
+            file.HasKey(x => x.ActivityId);
+            
+            file.HasOne<ActivityEntity>()
+                .WithOne()
+                .HasForeignKey<ActivityFileEntity>(x => x.ActivityId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
