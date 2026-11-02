@@ -1,4 +1,4 @@
-namespace Cyclo.Api.Models.Entities;
+namespace Cyclo.Api.Data.Entities;
 
 public enum ProcessStatus
 {

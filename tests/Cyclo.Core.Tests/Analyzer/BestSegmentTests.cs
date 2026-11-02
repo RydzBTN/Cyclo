@@ -1,3 +1,5 @@
+using Cyclo.Core.Analysis;
+using Cyclo.Core.Models;
 using Xunit.Abstractions;
 
 namespace Cyclo.Core.Tests.Analyzer;

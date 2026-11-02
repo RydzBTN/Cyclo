@@ -1,4 +1,4 @@
-using Cyclo.Api.Models.Entities;
+using Cyclo.Api.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cyclo.Api.Data;

@@ -1,4 +1,6 @@
-namespace Cyclo.Core;
+using Cyclo.Core.Models;
+
+namespace Cyclo.Core.Geo;
 
 public static class GeoMath
 {

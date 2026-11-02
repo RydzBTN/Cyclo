@@ -1,4 +1,4 @@
-namespace Cyclo.Core;
+namespace Cyclo.Core.Models;
 
 public record ActivitySummary(
     float Distance,

@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text;
 using System.Xml;
+using Cyclo.Core.Models;
+using Cyclo.Core.Parsing;
 
 namespace Cyclo.Core.Tests;
 

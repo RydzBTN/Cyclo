@@ -1,3 +1,6 @@
+using Cyclo.Core.Geo;
+using Cyclo.Core.Models;
+
 namespace Cyclo.Core.Tests;
 
 public class GeoMathTests

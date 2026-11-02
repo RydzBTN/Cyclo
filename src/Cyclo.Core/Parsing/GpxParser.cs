@@ -1,6 +1,7 @@
 using System.Xml.Linq;
+using Cyclo.Core.Models;
 
-namespace Cyclo.Core;
+namespace Cyclo.Core.Parsing;
 
 public static class GpxParser
 {

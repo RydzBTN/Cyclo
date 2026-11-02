@@ -1,4 +1,7 @@
-namespace Cyclo.Core;
+using Cyclo.Core.Geo;
+using Cyclo.Core.Models;
+
+namespace Cyclo.Core.Analysis;
 
 public static class ActivityAnalyzer
 {
