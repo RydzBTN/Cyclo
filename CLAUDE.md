@@ -99,6 +99,8 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie,  i surowy plik.
 - endpoint POST activities:
   - hasowanie pliku sha256
   - kompresja GZip | mode: Optimal| 317 KB| stopień  8,0x | kompresja 13,5 ms |  dekompresja 4,1 ms
+  - zapis do bazy aktywności i osobno pliku
+  - zwraca id i status
 - 
 
 
