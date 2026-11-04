@@ -95,6 +95,12 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie,  i surowy plik.
 - Pierwsza migracja `InitialCreate`, baza `Cyclo` z tabelą `Activities`.
 - encja dla plików .gpx z relacją 1:1 do `ActivityEntity`.
 
+### Dzień 6
+- endpoint POST activities:
+  - hasowanie pliku sha256
+  - kompresja GZip | mode: Optimal| 317 KB| stopień  8,0x | kompresja 13,5 ms |  dekompresja 4,1 ms
+- 
+
 
 
 

@@ -1,6 +1,3 @@
 namespace Cyclo.Api.Contracts.Activities;
 
-public class ActivityCreatedResponse
-{
-    
-}
+public record ActivityCreatedResponse(Guid Id, string Status);

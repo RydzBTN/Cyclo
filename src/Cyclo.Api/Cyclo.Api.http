@@ -4,3 +4,39 @@ GET http://localhost:5118/activities/33
 Accept: application/json
 
 ###
+
+POST http://localhost:5118/activities
+Content-Type: multipart/form-data; boundary=Boundary
+
+--Boundary
+Content-Disposition: form-data; name="file"; filename="ride.gpx"
+Content-Type: application/gpx+xml
+
+< ../../tests/Cyclo.Core.Tests/TestData/Private/activity_23911368613.gpx
+--Boundary--
+
+
+### Same File
+
+POST http://localhost:5118/activities
+Content-Type: multipart/form-data; boundary=Boundary
+
+--Boundary
+Content-Disposition: form-data; name="file"; filename="ride.gpx"
+Content-Type: application/gpx+xml
+
+< ../../tests/Cyclo.Core.Tests/TestData/Private/activity_23911368613.gpx
+--Boundary--
+
+
+### Not .gpx fileName (.txt)
+
+POST http://localhost:5118/activities
+Content-Type: multipart/form-data; boundary=Boundary
+
+--Boundary
+Content-Disposition: form-data; name="file"; filename="ride.txt"
+Content-Type: application/gpx+xml
+
+< ../../tests/Cyclo.Core.Tests/TestData/Private/activity_23911368613.gpx
+--Boundary--
