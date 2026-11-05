@@ -101,7 +101,17 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie,  i surowy plik.
   - kompresja GZip | mode: Optimal| 317 KB| stopień  8,0x | kompresja 13,5 ms |  dekompresja 4,1 ms
   - zapis do bazy aktywności i osobno pliku
   - zwraca id i status
-- 
+  
+### Dzień 7
+- DTO dla odpowiedzi aktywności
+  - activity, summary, bestSegment
+- endpoint GET activities/{id}
+  - mapowanie przez projekcje
+  - Testy:
+    - Nieistniejący guid - application/problem+json (api controller automatycznie opakował błąd)
+    - Wywołanie z id - routing nie znalazł endpointu i zwrócił pustą treść - Content-Length: 0
+    - wywołanie z innym userid - to samo co nieistniejące guid
+    - do zrobienia wspolny format błędu
 
 
 

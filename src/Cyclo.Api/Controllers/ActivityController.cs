@@ -16,9 +16,47 @@ public class ActivityController(CycloDbContext dbContext) : ControllerBase
     private const string TempUserId = "user";
     
     [HttpGet("{id:guid}")]
-    public IActionResult Get(Guid id)
+    public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
     {
-        return NotFound();
+        ActivityResponse? response = await dbContext.Activities
+            .Where(x => x.Id == id && x.UserId == TempUserId)
+            .Select(x => new ActivityResponse(
+                x.Id,
+                x.Status.ToString(),
+                x.UploadedAt,
+                x.ProcessingStartedAt,
+                x.ProcessingEndedAt,
+                x.FileName,
+                x.FailureReason,
+                x.Summary == null ? null : new ActivitySummaryResponse(
+                    x.Summary.DistanceMeters,
+                    x.Summary.ActivityDistanceMeters,
+                    x.Summary.TotalSeconds,
+                    x.Summary.ActivitySeconds,
+                    x.Summary.AvgSpeedMps,
+                    x.Summary.AvgHeartRate,
+                    x.Summary.MaxHeartRate,
+                    x.Summary.ElevationGainMeters, 
+                    x.Summary.Best1Km == null ? null : new BestSegmentResponse(
+                        x.Summary.Best1Km.StartTime,
+                        x.Summary.Best1Km.EndTime,
+                        x.Summary.Best1Km.AvgSpeedMps),
+                    x.Summary.Best5Km == null ? null : new BestSegmentResponse(
+                        x.Summary.Best5Km.StartTime,
+                        x.Summary.Best5Km.EndTime,
+                        x.Summary.Best5Km.AvgSpeedMps),
+                    x.Summary.Best10Km == null ? null : new BestSegmentResponse(
+                        x.Summary.Best10Km.StartTime,
+                        x.Summary.Best10Km.EndTime,
+                        x.Summary.Best10Km.AvgSpeedMps)
+                    )
+                )
+            )
+            .FirstOrDefaultAsync(cancellationToken);
+        
+        if (response is null) return NotFound();
+        
+        return Ok(response);
     }
     
     [HttpPost]

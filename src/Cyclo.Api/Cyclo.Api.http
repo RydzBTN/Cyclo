@@ -1,10 +1,22 @@
 @Cyclo_Api_HostAddress = http://localhost:5118
 
-GET {{Cyclo_Api_HostAddress}}/activities/33
+
+### Get Activity
+GET {{Cyclo_Api_HostAddress}}/activities/87a273fa-c74b-4300-483a-08df3ab801c5
 Accept: application/json
 
-### Upload GPX file
 
+### Get Activity with wrong guid
+GET {{Cyclo_Api_HostAddress}}/activities/87a273fa-c74b-4300-483a-08df3ab801c9
+Accept: application/json
+
+
+### Get Activity with id wich is not guid
+GET {{Cyclo_Api_HostAddress}}/activities/12345
+Accept: application/json
+
+
+### Upload GPX file
 POST {{Cyclo_Api_HostAddress}}/activities
 Content-Type: multipart/form-data; boundary=Boundary
 
@@ -15,8 +27,8 @@ Content-Type: application/gpx+xml
 < ../../tests/Cyclo.Core.Tests/TestData/Private/activity_23911368613.gpx
 --Boundary--
 
-### Same File
 
+### Same File
 POST {{Cyclo_Api_HostAddress}}/activities
 Content-Type: multipart/form-data; boundary=Boundary
 
@@ -29,7 +41,6 @@ Content-Type: application/gpx+xml
 
 
 ### Not .gpx fileName (.txt)
-
 POST {{Cyclo_Api_HostAddress}}/activities
 Content-Type: multipart/form-data; boundary=Boundary
 
