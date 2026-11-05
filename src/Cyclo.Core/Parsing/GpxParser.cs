@@ -12,7 +12,7 @@ public static class GpxParser
     public static IReadOnlyList<TrackPoint> ParseTrackPoints(Stream stream)
     {
         XmlReaderSettings settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit };
-        XmlReader reader = XmlReader.Create(stream, settings);
+        using XmlReader reader = XmlReader.Create(stream, settings);
         
         XDocument doc = XDocument.Load(reader);
         

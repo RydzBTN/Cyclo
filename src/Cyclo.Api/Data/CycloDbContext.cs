@@ -20,6 +20,7 @@ public class CycloDbContext : DbContext
             activity.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
             activity.Property(x => x.FileName).HasMaxLength(255);
             activity.Property(x => x.FileHash).IsUnicode(false).HasMaxLength(64).IsFixedLength();
+            activity.Property(x => x.FailureReason).HasMaxLength(255);
 
             activity.OwnsOne(x => x.Summary, summary =>
             {

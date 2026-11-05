@@ -13,6 +13,7 @@ public class ActivityEntity
     public required string FileName { get; set; }
     public required long OriginalSizeBytes { get; set; }
     public required string FileHash { get; set; }
+    public string? FailureReason { get; set; }
     
     public ActivitySummaryEntity? Summary { get; set; }
 }

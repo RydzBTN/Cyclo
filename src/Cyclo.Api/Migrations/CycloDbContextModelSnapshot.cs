@@ -22,11 +22,15 @@ namespace Cyclo.Api.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Cyclo.Api.Models.Entities.ActivityEntity", b =>
+            modelBuilder.Entity("Cyclo.Api.Data.Entities.ActivityEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("FileHash")
                         .IsRequired()
@@ -72,7 +76,7 @@ namespace Cyclo.Api.Migrations
                     b.ToTable("Activities", (string)null);
                 });
 
-            modelBuilder.Entity("Cyclo.Api.Models.Entities.ActivityFileEntity", b =>
+            modelBuilder.Entity("Cyclo.Api.Data.Entities.ActivityFileEntity", b =>
                 {
                     b.Property<Guid>("ActivityId")
                         .HasColumnType("uniqueidentifier");
@@ -86,14 +90,14 @@ namespace Cyclo.Api.Migrations
                     b.ToTable("ActivityFiles", (string)null);
                 });
 
-            modelBuilder.Entity("Cyclo.Api.Models.Entities.ActivityEntity", b =>
+            modelBuilder.Entity("Cyclo.Api.Data.Entities.ActivityEntity", b =>
                 {
-                    b.OwnsOne("Cyclo.Api.Models.Entities.ActivitySummaryEntity", "Summary", b1 =>
+                    b.OwnsOne("Cyclo.Api.Data.Entities.ActivitySummaryEntity", "Summary", b1 =>
                         {
                             b1.Property<Guid>("ActivityEntityId")
                                 .HasColumnType("uniqueidentifier");
 
-                            b1.Property<float?>("ActivityDistance")
+                            b1.Property<float?>("ActivityDistanceMeters")
                                 .HasColumnType("real");
 
                             b1.Property<int?>("ActivitySeconds")
@@ -102,13 +106,13 @@ namespace Cyclo.Api.Migrations
                             b1.Property<int?>("AvgHeartRate")
                                 .HasColumnType("int");
 
-                            b1.Property<float?>("AvgSpeed")
+                            b1.Property<float?>("AvgSpeedMps")
                                 .HasColumnType("real");
 
-                            b1.Property<float>("Distance")
+                            b1.Property<float>("DistanceMeters")
                                 .HasColumnType("real");
 
-                            b1.Property<float?>("Elevation")
+                            b1.Property<float?>("ElevationGainMeters")
                                 .HasColumnType("real");
 
                             b1.Property<int?>("MaxHeartRate")
@@ -124,12 +128,12 @@ namespace Cyclo.Api.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("ActivityEntityId");
 
-                            b1.OwnsOne("Cyclo.Api.Models.Entities.BestSegmentEntity", "Best10Km", b2 =>
+                            b1.OwnsOne("Cyclo.Api.Data.Entities.BestSegmentEntity", "Best10Km", b2 =>
                                 {
                                     b2.Property<Guid>("ActivitySummaryEntityActivityEntityId")
                                         .HasColumnType("uniqueidentifier");
 
-                                    b2.Property<float>("AvgSpeed")
+                                    b2.Property<float>("AvgSpeedMps")
                                         .HasColumnType("real");
 
                                     b2.Property<DateTimeOffset>("EndTime")
@@ -146,12 +150,12 @@ namespace Cyclo.Api.Migrations
                                         .HasForeignKey("ActivitySummaryEntityActivityEntityId");
                                 });
 
-                            b1.OwnsOne("Cyclo.Api.Models.Entities.BestSegmentEntity", "Best1Km", b2 =>
+                            b1.OwnsOne("Cyclo.Api.Data.Entities.BestSegmentEntity", "Best1Km", b2 =>
                                 {
                                     b2.Property<Guid>("ActivitySummaryEntityActivityEntityId")
                                         .HasColumnType("uniqueidentifier");
 
-                                    b2.Property<float>("AvgSpeed")
+                                    b2.Property<float>("AvgSpeedMps")
                                         .HasColumnType("real");
 
                                     b2.Property<DateTimeOffset>("EndTime")
@@ -168,12 +172,12 @@ namespace Cyclo.Api.Migrations
                                         .HasForeignKey("ActivitySummaryEntityActivityEntityId");
                                 });
 
-                            b1.OwnsOne("Cyclo.Api.Models.Entities.BestSegmentEntity", "Best5Km", b2 =>
+                            b1.OwnsOne("Cyclo.Api.Data.Entities.BestSegmentEntity", "Best5Km", b2 =>
                                 {
                                     b2.Property<Guid>("ActivitySummaryEntityActivityEntityId")
                                         .HasColumnType("uniqueidentifier");
 
-                                    b2.Property<float>("AvgSpeed")
+                                    b2.Property<float>("AvgSpeedMps")
                                         .HasColumnType("real");
 
                                     b2.Property<DateTimeOffset>("EndTime")
@@ -200,11 +204,11 @@ namespace Cyclo.Api.Migrations
                     b.Navigation("Summary");
                 });
 
-            modelBuilder.Entity("Cyclo.Api.Models.Entities.ActivityFileEntity", b =>
+            modelBuilder.Entity("Cyclo.Api.Data.Entities.ActivityFileEntity", b =>
                 {
-                    b.HasOne("Cyclo.Api.Models.Entities.ActivityEntity", null)
+                    b.HasOne("Cyclo.Api.Data.Entities.ActivityEntity", null)
                         .WithOne()
-                        .HasForeignKey("Cyclo.Api.Models.Entities.ActivityFileEntity", "ActivityId")
+                        .HasForeignKey("Cyclo.Api.Data.Entities.ActivityFileEntity", "ActivityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

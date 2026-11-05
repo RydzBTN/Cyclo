@@ -1,11 +1,11 @@
-@Cyclo.Api_HostAddress = http://localhost:5118
+@Cyclo_Api_HostAddress = http://localhost:5118
 
-GET http://localhost:5118/activities/33
+GET {{Cyclo_Api_HostAddress}}/activities/33
 Accept: application/json
 
-###
+### Upload GPX file
 
-POST http://localhost:5118/activities
+POST {{Cyclo_Api_HostAddress}}/activities
 Content-Type: multipart/form-data; boundary=Boundary
 
 --Boundary
@@ -15,10 +15,9 @@ Content-Type: application/gpx+xml
 < ../../tests/Cyclo.Core.Tests/TestData/Private/activity_23911368613.gpx
 --Boundary--
 
-
 ### Same File
 
-POST http://localhost:5118/activities
+POST {{Cyclo_Api_HostAddress}}/activities
 Content-Type: multipart/form-data; boundary=Boundary
 
 --Boundary
@@ -31,7 +30,7 @@ Content-Type: application/gpx+xml
 
 ### Not .gpx fileName (.txt)
 
-POST http://localhost:5118/activities
+POST {{Cyclo_Api_HostAddress}}/activities
 Content-Type: multipart/form-data; boundary=Boundary
 
 --Boundary
