@@ -9,7 +9,7 @@ namespace Cyclo.Core.Tests.Exploration;
 [Trait("Category", "LocalData")]
 public class CompressionTests(ITestOutputHelper output)
 {
-    private const int Runs = 3;
+    private const int Runs = 10;
 
     [Fact]
     public void Compare_GZip_and_Brotli_levels()
