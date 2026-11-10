@@ -5,15 +5,14 @@
 GET {{Cyclo_Api_HostAddress}}/activities/87a273fa-c74b-4300-483a-08df3ab801c5
 Accept: application/json
 
-
 ### Get Activity with wrong guid
 GET {{Cyclo_Api_HostAddress}}/activities/87a273fa-c74b-4300-483a-08df3ab801c9
 Accept: application/json
 
-
 ### Get Activity with id wich is not guid
 GET {{Cyclo_Api_HostAddress}}/activities/12345
 Accept: application/json
+
 
 
 ### Upload GPX file
@@ -27,6 +26,19 @@ Content-Type: application/gpx+xml
 < ../../tests/Cyclo.Core.Tests/TestData/Private/activity_23911368613.gpx
 --Boundary--
 
+###  Unsupported Media Type
+POST {{Cyclo_Api_HostAddress}}/activities
+Content-Type: application/json
+
+###  File larget than 10MB (12 373 KB)
+POST {{Cyclo_Api_HostAddress}}/activities
+Content-Type: multipart/form-data; boundary=Boundary
+
+--Boundary
+Content-Disposition: form-data; name="file"; filename="ride.gpx"
+Content-Type: application/gpx+xml
+
+< ../../tests/Cyclo.Core.Tests/TestData/Private/big_file_over_10MB.gpx
 
 ### Same File
 POST {{Cyclo_Api_HostAddress}}/activities

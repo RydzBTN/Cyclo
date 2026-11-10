@@ -57,9 +57,10 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie,  i surowy plik.
 | 1 | Core: `TrackPoint`, `GeoMath.HaversineMeters`, `GpxParser`, `ActivityAnalyzer` + testy (bez webu) |
 | 2 | API: upload/202/status, EF Core + migracje, JWT, walidacja, obsługa błędów, OpenAPI UI (Scalar/Swashbuckle) |
 | 3 | Channel + BackgroundService, odtwarzanie po restarcie, semafor, cancellation |
-| 4 | Testcontainers (prawdziwy SQL Server), Docker Compose, GitHub Actions (build + test) |
-| 5 | Benchmark: `XDocument`+LINQ vs `XmlReader`+`ReadOnlySpan<char>` (`[MemoryDiagnoser]`), README z diagramem Mermaid i sekcją „Wyzwania i rozwiązania” |
-| 6 | Bufor. Opcjonalnie: jeden prosty deploy na Azure (Container Apps + Azure SQL) przez Azure CLI, z budżetem i alertem kosztów; po wszystkim usunięcie grupy zasobów |
+| 4 | Frontend w React + TS - lista treningów i wykres trasy |
+| 5 | Testcontainers (prawdziwy SQL Server), Docker Compose, GitHub Actions (build + test) |
+| 6 | Benchmark: `XDocument`+LINQ vs `XmlReader`+`ReadOnlySpan<char>` (`[MemoryDiagnoser]`), README z diagramem Mermaid i sekcją „Wyzwania i rozwiązania” |
+| 7 | Bufor. Opcjonalnie: jeden prosty deploy na Azure (Container Apps + Azure SQL) przez Azure CLI, z budżetem i alertem kosztów; po wszystkim usunięcie grupy zasobów |
 
 Świadomie POMIJAMY na tym etapie: CQRS/MediatR, Transactional Outbox, Dapper, Redis, mikroserwisy, pełną Clean Architecture.
 
@@ -112,6 +113,10 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie,  i surowy plik.
     - Wywołanie z id - routing nie znalazł endpointu i zwrócił pustą treść - Content-Length: 0
     - wywołanie z innym userid - to samo co nieistniejące guid
     - do zrobienia wspolny format błędu
+
+### Dzień 8
+- Globalna obsługa błędów z pomocą `builder.Services.AddProblemDetails()`, `app.UseExceptionHandler()`, `app.UseStatusCodePages()`.
+- stack trace tylko w Dev build, w Prod TraceId.
 
 
 

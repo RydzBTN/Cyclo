@@ -54,7 +54,8 @@ public class ActivityController(CycloDbContext dbContext) : ControllerBase
             )
             .FirstOrDefaultAsync(cancellationToken);
         
-        if (response is null) return NotFound();
+        if (response is null) return Problem(
+            statusCode: StatusCodes.Status404NotFound);
         
         return Ok(response);
     }
@@ -64,10 +65,15 @@ public class ActivityController(CycloDbContext dbContext) : ControllerBase
     [RequestSizeLimit(10 * 1024 * 1024)] // 10MB
     public async Task<IActionResult> UploadActivity(IFormFile file, CancellationToken cancellationToken)
     {
-        if (file.Length == 0) return BadRequest("file is empty");
+        if (file.Length == 0) ModelState.AddModelError(nameof(file), "File is empty");
+
         if (!string.Equals(Path.GetExtension(file.FileName), ".gpx", StringComparison.OrdinalIgnoreCase))
-            return BadRequest("file is not gpx");
-        if (file.FileName.Length > 255) return BadRequest("file name is too long");
+            ModelState.AddModelError(nameof(file), "File doesn't have gpx extension");
+        
+        if (file.FileName.Length > 255)
+            ModelState.AddModelError(nameof(file), "File name is longer than 255 characters");
+        
+        if (!ModelState.IsValid) return ValidationProblem(ModelState);
         
         string hash;
         byte[] compressed;
@@ -113,7 +119,9 @@ public class ActivityController(CycloDbContext dbContext) : ControllerBase
         }
         catch (DbUpdateException ex) when (ex.InnerException is SqlException {Number: 2601 or 2627})
         {
-            return Conflict("this file already exists"); // or 303
+            return Problem(
+                statusCode: StatusCodes.Status409Conflict, 
+                detail: "this file already exists");
         }
 
         return AcceptedAtAction(
