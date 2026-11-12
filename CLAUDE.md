@@ -106,7 +106,7 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie,  i surowy plik.
 ### Dzień 7
 - DTO dla odpowiedzi aktywności
   - activity, summary, bestSegment
-- endpoint GET activities/{id}
+- endpoint `GET activities/{id}`
   - mapowanie przez projekcje
   - Testy:
     - Nieistniejący guid - application/problem+json (api controller automatycznie opakował błąd)
@@ -117,6 +117,16 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie,  i surowy plik.
 ### Dzień 8
 - Globalna obsługa błędów z pomocą `builder.Services.AddProblemDetails()`, `app.UseExceptionHandler()`, `app.UseStatusCodePages()`.
 - stack trace tylko w Dev build, w Prod TraceId.
+
+### Dzień 9
+- `ActivityCursor.cs` kodowanie i dekodowanie kursora - zawiera date, id i jest kodowany do stringa.
+- endpint `GetPage` zwracający liste aktywności i kursor do pobrania następnej strony
+  - gdy dwie aktywności mają taką samą date to decyduje GUID (`CompareTo`)
+  - gdy kursor jest null to znaczy że nie ma więcej aktywności
+- Dodanie opisu Rest API za pomocą openAPI
+- Dodanie interfejsu graficznego Scalar
+- Ustawienie zwracanych typów `ProducesResponseType` dla dokumentacji OpenApi
+
 
 
 

@@ -5,8 +5,8 @@ public record ActivityListItemResponse(
     string Status,
     DateTimeOffset UploadedAt,
     string FileName,
-    float? Distance,
-    int? TrainingTimeSeconds,
+    float? ActivityDistanceMeters,
+    int? ActivitySeconds,
     float? AvgSpeedMps,
     float? ElevationGainMeters,
     int? AvgHeartRate

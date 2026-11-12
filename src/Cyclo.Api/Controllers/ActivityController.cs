@@ -1,8 +1,10 @@
+using System.ComponentModel.DataAnnotations;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using Cyclo.Api.Contracts.Activities;
 using Cyclo.Api.Data;
 using Cyclo.Api.Data.Entities;
+using Cyclo.Api.Pagination;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +18,9 @@ public class ActivityController(CycloDbContext dbContext) : ControllerBase
     private const string TempUserId = "user";
     
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> Get(Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<ActivityResponse>> Get(Guid id, CancellationToken cancellationToken)
     {
         ActivityResponse? response = await dbContext.Activities
             .Where(x => x.Id == id && x.UserId == TempUserId)
@@ -53,15 +57,64 @@ public class ActivityController(CycloDbContext dbContext) : ControllerBase
                 )
             )
             .FirstOrDefaultAsync(cancellationToken);
-        
-        if (response is null) return Problem(
-            statusCode: StatusCodes.Status404NotFound);
+
+        if (response is null) return NotFound();
         
         return Ok(response);
     }
     
+    [HttpGet]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<ActivityPageResponse>> GetPage(
+        [FromQuery] string? cursor,
+        [FromQuery, Range(1, 50)] int pageSize = 10,
+        CancellationToken cancellationToken = default)
+    {
+        IQueryable<ActivityEntity> query = dbContext.Activities.Where(x => x.UserId == TempUserId);
+
+        if (!string.IsNullOrEmpty(cursor))
+        {
+            if (!ActivityCursor.TryDecode(cursor, out DateTimeOffset cursorDate, out Guid id))
+            {
+                ModelState.AddModelError(nameof(cursor), "cannot decode cursor");
+                return ValidationProblem(ModelState);
+            }
+
+            query = query.Where(x => x.UploadedAt < cursorDate || (x.UploadedAt == cursorDate && x.Id.CompareTo(id) < 0));
+        }
+
+        List<ActivityListItemResponse> items = await query.OrderByDescending(x => x.UploadedAt)
+            .ThenByDescending(x => x.Id)
+            .Take(pageSize + 1)
+            .Select(x => new ActivityListItemResponse(
+                x.Id,
+                x.Status.ToString(),
+                x.UploadedAt,
+                x.FileName,
+                x.Summary == null ? null : x.Summary.ActivityDistanceMeters,
+                x.Summary == null ? null : x.Summary.ActivitySeconds,
+                x.Summary == null ? null : x.Summary.AvgSpeedMps,
+                x.Summary == null ? null : x.Summary.ElevationGainMeters,
+                x.Summary == null ? null : x.Summary.AvgHeartRate
+            ))
+            .ToListAsync(cancellationToken);
+
+        bool hasMore = items.Count > pageSize;
+        if (hasMore) items.RemoveAt(pageSize);
+
+        string? nextCursor = hasMore ? ActivityCursor.Encode(items[^1].UploadedAt, items[^1].Id) : null;
+        
+        return Ok(new ActivityPageResponse(items, nextCursor));
+    }
+    
+    
     [HttpPost]
     [Consumes("multipart/form-data")]
+    [ProducesResponseType(StatusCodes.Status415UnsupportedMediaType)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ActivityCreatedResponse>(StatusCodes.Status202Accepted)]
     [RequestSizeLimit(10 * 1024 * 1024)] // 10MB
     public async Task<IActionResult> UploadActivity(IFormFile file, CancellationToken cancellationToken)
     {
@@ -112,7 +165,7 @@ public class ActivityController(CycloDbContext dbContext) : ControllerBase
             Data = compressed
         };
         dbContext.Add(activityFile);
-
+        
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);

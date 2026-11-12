@@ -2,11 +2,11 @@ using System.Buffers.Text;
 using System.Globalization;
 using System.Text;
 
-namespace Cyclo.Api.Controllers;
+namespace Cyclo.Api.Pagination;
 
 public static class ActivityCursor
 {
-    static string Encode(DateTimeOffset uploadedAt, Guid id)
+    public static string Encode(DateTimeOffset uploadedAt, Guid id)
     {
         string dateString = uploadedAt.ToString("O", CultureInfo.InvariantCulture);
         string cursor = $"{dateString}|{id}";
@@ -16,7 +16,7 @@ public static class ActivityCursor
         return Base64Url.EncodeToString(bytes);
     }
     
-    static bool TryDecode(string encodedCursor, out DateTimeOffset uploadedAt, out Guid id)
+    public static bool TryDecode(string encodedCursor, out DateTimeOffset uploadedAt, out Guid id)
     {
         uploadedAt = DateTimeOffset.MinValue;
         id = Guid.Empty;
@@ -26,7 +26,10 @@ public static class ActivityCursor
         {
             bytes = Base64Url.DecodeFromChars(encodedCursor);
         }
-        catch { return false; }
+        catch (FormatException)
+        {
+            return false;
+        }
         
         string cursor = Encoding.UTF8.GetString(bytes);
 

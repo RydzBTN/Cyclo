@@ -1,0 +1,7 @@
+### Get page
+GET http://localhost:5118/activities?pageSize=1
+Accept: application/json
+
+### Get page with cursor
+GET http://localhost:5118/activities?pageSize=1&cursor=MjAyNi0xMS0xMVQxOToyNToxNi43NjgzMjgzKzAwOjAwfGYzZWUyM2RkLWE4NDQtNGNhNS0yOGUzLTA4ZGY0MDI5ODQ1Yw
+Accept: application/json
