@@ -1,4 +1,5 @@
-using Cyclo.Api.Data.Entities;
+using Cyclo.Api.Data.Entities.Activity;
+using Cyclo.Api.Data.Entities.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cyclo.Api.Data;
@@ -9,14 +10,14 @@ public class CycloDbContext : DbContext
     
     public DbSet<ActivityEntity> Activities => Set<ActivityEntity>();
     public DbSet<ActivityFileEntity> ActivityFiles => Set<ActivityFileEntity>();
-
+    public DbSet<UserEntity> Users => Set<UserEntity>();
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<ActivityEntity>(activity =>
         {
             activity.ToTable("Activities");
             activity.HasKey(x => x.Id);
-            activity.Property(x => x.UserId).HasMaxLength(200);
             activity.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
             activity.Property(x => x.FileName).HasMaxLength(255);
             activity.Property(x => x.FileHash).IsUnicode(false).HasMaxLength(64).IsFixedLength();
@@ -31,6 +32,11 @@ public class CycloDbContext : DbContext
             
             activity.HasIndex(x => new { x.UserId, x.FileHash }).IsUnique(); // deduplication
             activity.HasIndex(x => new { x.UserId, x.UploadedAt });
+
+            activity.HasOne<UserEntity>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<ActivityFileEntity>(file =>
@@ -42,6 +48,17 @@ public class CycloDbContext : DbContext
                 .WithOne()
                 .HasForeignKey<ActivityFileEntity>(x => x.ActivityId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<UserEntity>(users =>
+        {
+            users.ToTable("Users");
+            users.HasKey(x => x.Id);
+            users.Property(x => x.Email).HasMaxLength(255);
+            users.Property(x => x.PasswordHash).HasMaxLength(255).IsUnicode(false);
+            users.Property(x => x.Role).HasConversion<string>().HasMaxLength(20);
+
+            users.HasIndex(x => x.Email).IsUnique();
         });
     }
 }

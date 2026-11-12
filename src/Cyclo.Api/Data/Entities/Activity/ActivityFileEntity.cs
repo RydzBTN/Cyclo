@@ -1,4 +1,4 @@
-namespace Cyclo.Api.Data.Entities;
+namespace Cyclo.Api.Data.Entities.Activity;
 
 public class ActivityFileEntity
 {

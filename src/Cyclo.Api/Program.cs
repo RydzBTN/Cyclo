@@ -1,4 +1,7 @@
 using Cyclo.Api.Data;
+using Cyclo.Api.Data.Entities.Users;
+using Cyclo.Api.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
@@ -9,6 +12,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
+builder.Services.AddSingleton<IPasswordHasher<UserEntity>, PasswordHasher<UserEntity>>();
+builder.Services.AddSingleton<DummyPasswordHash>();
 
 string connectionString = builder.Configuration.GetConnectionString("Cyclo") ??
                           throw new InvalidOperationException("no connection string");

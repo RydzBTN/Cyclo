@@ -3,7 +3,7 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using Cyclo.Api.Contracts.Activities;
 using Cyclo.Api.Data;
-using Cyclo.Api.Data.Entities;
+using Cyclo.Api.Data.Entities.Activity;
 using Cyclo.Api.Pagination;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
@@ -15,7 +15,7 @@ namespace Cyclo.Api.Controllers;
 [Route("activities")]
 public class ActivityController(CycloDbContext dbContext) : ControllerBase
 {
-    private const string TempUserId = "user";
+    private static readonly Guid TempUserId = Guid.Empty;
     
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

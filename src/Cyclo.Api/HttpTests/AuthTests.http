@@ -1,0 +1,82 @@
+### Succcesful register
+POST http://localhost:5118/auth/register
+Content-Type: application/json
+
+{
+  "email": "jan123@cyclo.dev",
+  "password": "tajnehaslo123"
+}
+
+### Same mail
+POST http://localhost:5118/auth/register
+Content-Type: application/json
+
+{
+  "email": "jan123@cyclo.dev",
+  "password": "tajnehaslo123"
+}
+
+### Wrong mail format
+POST http://localhost:5118/auth/register
+Content-Type: application/json
+
+{
+  "email": "jan123cyclo.dev",
+  "password": "tajnehaslo123"
+}
+
+
+
+
+
+### Succesful login
+POST http://localhost:5118/auth/login
+Content-Type: application/json
+
+{
+  "email": "jan123@cyclo.dev",
+  "password": "tajnehaslo123"
+}
+
+### Wrong Password
+POST http://localhost:5118/auth/login
+Content-Type: application/json
+
+{
+  "email": "jan123@cyclo.dev",
+  "password": "zlehaslo123"
+}
+
+### non-existing mail
+POST http://localhost:5118/auth/login
+Content-Type: application/json
+
+{
+  "email": "tomek123@cyclo.dev",
+  "password": "zlehaslo123"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

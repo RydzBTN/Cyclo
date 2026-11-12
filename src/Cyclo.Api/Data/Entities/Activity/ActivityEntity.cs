@@ -1,9 +1,9 @@
-namespace Cyclo.Api.Data.Entities;
+namespace Cyclo.Api.Data.Entities.Activity;
 
 public class ActivityEntity
 {
     public Guid Id { get; set; }
-    public required string UserId { get; set; }
+    public Guid UserId { get; set; }
     public ProcessStatus Status { get; set; }
     
     public required DateTimeOffset UploadedAt { get; set; }

@@ -127,6 +127,10 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie,  i surowy plik.
 - Dodanie interfejsu graficznego Scalar
 - Ustawienie zwracanych typów `ProducesResponseType` dla dokumentacji OpenApi
 
+### Dzień 10
+- użytkownicy
+- register/login
+
 
 
 

@@ -22,7 +22,7 @@ namespace Cyclo.Api.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Cyclo.Api.Data.Entities.ActivityEntity", b =>
+            modelBuilder.Entity("Cyclo.Api.Data.Entities.Activity.ActivityEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -61,10 +61,8 @@ namespace Cyclo.Api.Migrations
                     b.Property<DateTimeOffset>("UploadedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -76,7 +74,7 @@ namespace Cyclo.Api.Migrations
                     b.ToTable("Activities", (string)null);
                 });
 
-            modelBuilder.Entity("Cyclo.Api.Data.Entities.ActivityFileEntity", b =>
+            modelBuilder.Entity("Cyclo.Api.Data.Entities.Activity.ActivityFileEntity", b =>
                 {
                     b.Property<Guid>("ActivityId")
                         .HasColumnType("uniqueidentifier");
@@ -90,9 +88,48 @@ namespace Cyclo.Api.Migrations
                     b.ToTable("ActivityFiles", (string)null);
                 });
 
-            modelBuilder.Entity("Cyclo.Api.Data.Entities.ActivityEntity", b =>
+            modelBuilder.Entity("Cyclo.Api.Data.Entities.Users.UserEntity", b =>
                 {
-                    b.OwnsOne("Cyclo.Api.Data.Entities.ActivitySummaryEntity", "Summary", b1 =>
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("Cyclo.Api.Data.Entities.Activity.ActivityEntity", b =>
+                {
+                    b.HasOne("Cyclo.Api.Data.Entities.Users.UserEntity", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Cyclo.Api.Data.Entities.Activity.ActivitySummaryEntity", "Summary", b1 =>
                         {
                             b1.Property<Guid>("ActivityEntityId")
                                 .HasColumnType("uniqueidentifier");
@@ -128,7 +165,7 @@ namespace Cyclo.Api.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("ActivityEntityId");
 
-                            b1.OwnsOne("Cyclo.Api.Data.Entities.BestSegmentEntity", "Best10Km", b2 =>
+                            b1.OwnsOne("Cyclo.Api.Data.Entities.Activity.BestSegmentEntity", "Best10Km", b2 =>
                                 {
                                     b2.Property<Guid>("ActivitySummaryEntityActivityEntityId")
                                         .HasColumnType("uniqueidentifier");
@@ -150,7 +187,7 @@ namespace Cyclo.Api.Migrations
                                         .HasForeignKey("ActivitySummaryEntityActivityEntityId");
                                 });
 
-                            b1.OwnsOne("Cyclo.Api.Data.Entities.BestSegmentEntity", "Best1Km", b2 =>
+                            b1.OwnsOne("Cyclo.Api.Data.Entities.Activity.BestSegmentEntity", "Best1Km", b2 =>
                                 {
                                     b2.Property<Guid>("ActivitySummaryEntityActivityEntityId")
                                         .HasColumnType("uniqueidentifier");
@@ -172,7 +209,7 @@ namespace Cyclo.Api.Migrations
                                         .HasForeignKey("ActivitySummaryEntityActivityEntityId");
                                 });
 
-                            b1.OwnsOne("Cyclo.Api.Data.Entities.BestSegmentEntity", "Best5Km", b2 =>
+                            b1.OwnsOne("Cyclo.Api.Data.Entities.Activity.BestSegmentEntity", "Best5Km", b2 =>
                                 {
                                     b2.Property<Guid>("ActivitySummaryEntityActivityEntityId")
                                         .HasColumnType("uniqueidentifier");
@@ -204,11 +241,11 @@ namespace Cyclo.Api.Migrations
                     b.Navigation("Summary");
                 });
 
-            modelBuilder.Entity("Cyclo.Api.Data.Entities.ActivityFileEntity", b =>
+            modelBuilder.Entity("Cyclo.Api.Data.Entities.Activity.ActivityFileEntity", b =>
                 {
-                    b.HasOne("Cyclo.Api.Data.Entities.ActivityEntity", null)
+                    b.HasOne("Cyclo.Api.Data.Entities.Activity.ActivityEntity", null)
                         .WithOne()
-                        .HasForeignKey("Cyclo.Api.Data.Entities.ActivityFileEntity", "ActivityId")
+                        .HasForeignKey("Cyclo.Api.Data.Entities.Activity.ActivityFileEntity", "ActivityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
