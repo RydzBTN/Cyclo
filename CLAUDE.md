@@ -1,10 +1,5 @@
 # Cyclo – kontekst projektu
 
-## Kim jestem i po co ten projekt
-Junior C#/.NET (inżynier informatyki), szukam pierwszej pracy jako backend .NET developer.
-Cyclo to projekt portfolio: ma nauczyć mnie radzenia sobie z problemami systemów produkcyjnych
-(asynchroniczność, współbieżność, testy, wydajność), a nie tylko CRUD.
-
 ## praca (WAŻNE)
 - To projekt do NAUKI. Nie pisz za mnie całych klas ani funkcji, chyba że wprost o to poproszę.
 - Gdy utknę: wyjaśnij koncepcję, wskaż kierunek, daj podpowiedź lub mały przykład obok mojego problemu.
