@@ -7,6 +7,7 @@
 - Pytaj mnie, jak bym coś rozwiązał, zanim podasz rozwiązanie.
 - Odpowiadaj po polsku. Kod, nazwy i commity po angielsku.
 - Nie dodawaj zależności (NuGet) ani warstw abstrakcji bez wyjaśnienia, po co są.
+- sam nie commituj
 
 ## Co robi aplikacja
 REST API do analizy telemetrii z jazdy rowerem (jak podsumowanie treningu w Garminie).
@@ -131,6 +132,11 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie,  i surowy plik.
 - Options pattern: `JwtOptions` + `ValidateOnStart`, klucz w user-secrets
 - `[Authorize]` na `ActivityController`, `User.GetUserId()` (metoda rozszerzająca)
 - Testy `JwtTests.http`
+- ================================================
+- opcje kolejki `AddOptions<ActivityQueueOptions>()`
+- kolejka dla obliczania podsumowania aktywności dla procesu w tle jako singleton `AddSingleton<ActivityQueue>();`
+- dodawanie do kolejki w `UploadActivity`
+- 
 
 
 

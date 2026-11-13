@@ -1,6 +1,7 @@
 using Cyclo.Api.Auth;
 using Cyclo.Api.Data;
 using Cyclo.Api.Data.Entities.Users;
+using Cyclo.Api.Processing;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -38,6 +39,12 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
             RoleClaimType = "role"
         };
     });
+
+builder.Services.AddOptions<ActivityQueueOptions>()
+    .BindConfiguration(ActivityQueueOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+builder.Services.AddSingleton<ActivityQueue>();
 
 
 string connectionString = builder.Configuration.GetConnectionString("Cyclo") ??

@@ -6,6 +6,7 @@ using Cyclo.Api.Contracts.Activities;
 using Cyclo.Api.Data;
 using Cyclo.Api.Data.Entities.Activity;
 using Cyclo.Api.Pagination;
+using Cyclo.Api.Processing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
@@ -16,7 +17,7 @@ namespace Cyclo.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("activities")]
-public class ActivityController(CycloDbContext dbContext) : ControllerBase
+public class ActivityController(CycloDbContext dbContext, ActivityQueue activityQueue) : ControllerBase
 {
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -116,6 +117,7 @@ public class ActivityController(CycloDbContext dbContext) : ControllerBase
     
     [HttpPost]
     [Consumes("multipart/form-data")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
     [ProducesResponseType(StatusCodes.Status415UnsupportedMediaType)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
@@ -132,6 +134,14 @@ public class ActivityController(CycloDbContext dbContext) : ControllerBase
             ModelState.AddModelError(nameof(file), "File name is longer than 255 characters");
         
         if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+        if (activityQueue.IsFull)
+        {
+            Response.Headers.RetryAfter = activityQueue.RetryAfterSeconds.ToString();
+            return Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                detail: "Server is overloaded");
+        }
         
         string hash;
         byte[] compressed;
@@ -178,14 +188,17 @@ public class ActivityController(CycloDbContext dbContext) : ControllerBase
         catch (DbUpdateException ex) when (ex.InnerException is SqlException {Number: 2601 or 2627})
         {
             return Problem(
-                statusCode: StatusCodes.Status409Conflict, 
+                statusCode: StatusCodes.Status409Conflict,
                 detail: "this file already exists");
         }
-
+        
+        _ = activityQueue.TryEnqueue(activity.Id); // if request survived activityQueue.IsFull, auto sweeper will calculate summary
+        
         return AcceptedAtAction(
             actionName: nameof(Get),
             routeValues: new { id = activity.Id },
             value: new ActivityCreatedResponse(activity.Id, activity.Status.ToString())
         );
     }
+    
 }
