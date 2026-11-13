@@ -126,6 +126,12 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie,  i surowy plik.
 - użytkownicy
 - register/login
 
+### Dzień 11
+- JWT: `TokenService` tworzenie tokena (`JsonWebTokenHandler`, HS256, claimy `sub` + `role`), login zwraca `AccessToken`
+- Options pattern: `JwtOptions` + `ValidateOnStart`, klucz w user-secrets
+- `[Authorize]` na `ActivityController`, `User.GetUserId()` (metoda rozszerzająca)
+- Testy `JwtTests.http`
+
 
 
 

@@ -1,7 +1,7 @@
 using Cyclo.Api.Data.Entities.Users;
 using Microsoft.AspNetCore.Identity;
 
-namespace Cyclo.Api.Services;
+namespace Cyclo.Api.Auth;
 
 public class DummyPasswordHash
 {

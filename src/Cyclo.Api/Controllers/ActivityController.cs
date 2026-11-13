@@ -1,29 +1,32 @@
 using System.ComponentModel.DataAnnotations;
 using System.IO.Compression;
 using System.Security.Cryptography;
+using Cyclo.Api.Auth;
 using Cyclo.Api.Contracts.Activities;
 using Cyclo.Api.Data;
 using Cyclo.Api.Data.Entities.Activity;
 using Cyclo.Api.Pagination;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cyclo.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("activities")]
 public class ActivityController(CycloDbContext dbContext) : ControllerBase
 {
-    private static readonly Guid TempUserId = Guid.Empty;
-    
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<ActivityResponse>> Get(Guid id, CancellationToken cancellationToken)
     {
+        Guid userId = User.GetUserId();
+        
         ActivityResponse? response = await dbContext.Activities
-            .Where(x => x.Id == id && x.UserId == TempUserId)
+            .Where(x => x.Id == id && x.UserId == userId)
             .Select(x => new ActivityResponse(
                 x.Id,
                 x.Status.ToString(),
@@ -71,7 +74,9 @@ public class ActivityController(CycloDbContext dbContext) : ControllerBase
         [FromQuery, Range(1, 50)] int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
-        IQueryable<ActivityEntity> query = dbContext.Activities.Where(x => x.UserId == TempUserId);
+        Guid userId = User.GetUserId();
+        
+        IQueryable<ActivityEntity> query = dbContext.Activities.Where(x => x.UserId == userId);
 
         if (!string.IsNullOrEmpty(cursor))
         {
@@ -150,7 +155,7 @@ public class ActivityController(CycloDbContext dbContext) : ControllerBase
         
         var activity = new ActivityEntity
         {
-            UserId = TempUserId, // TODO: replace with JWT sub
+            UserId = User.GetUserId(),
             Status = ProcessStatus.Pending,
             UploadedAt = DateTimeOffset.UtcNow,
             FileName = file.FileName,

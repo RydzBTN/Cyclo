@@ -1,0 +1,193 @@
+@host = http://localhost:5118
+
+# Run top to bottom: requests 1-4 store tokens and activity id in global variables.
+# Register returns 201 on first run and 409 on re-runs - both are fine.
+
+### 1. Register user A
+POST {{host}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "jwt-a@cyclo.dev",
+  "password": "tajnehaslo123"
+}
+
+> {%
+    client.test("User A registered or already exists", () => {
+        client.assert(response.status === 201 || response.status === 409, "Expected 201 or 409, got " + response.status);
+    });
+%}
+
+### 2. Login user A -> save tokenA
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "jwt-a@cyclo.dev",
+  "password": "tajnehaslo123"
+}
+
+> {%
+    client.test("Login A returns token", () => {
+        client.assert(response.status === 200, "Expected 200, got " + response.status);
+        client.assert(response.body.token, "No token in response");
+        client.assert(response.body.expiresAt, "No expiresAt in response");
+    });
+    client.global.set("tokenA", response.body.token);
+%}
+
+### 3. Register user B
+POST {{host}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "jwt-b@cyclo.dev",
+  "password": "tajnehaslo123"
+}
+
+> {%
+    client.test("User B registered or already exists", () => {
+        client.assert(response.status === 201 || response.status === 409, "Expected 201 or 409, got " + response.status);
+    });
+%}
+
+### 4. Login user B -> save tokenB
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "jwt-b@cyclo.dev",
+  "password": "tajnehaslo123"
+}
+
+> {%
+    client.test("Login B returns token", () => {
+        client.assert(response.status === 200, "Expected 200, got " + response.status);
+    });
+    client.global.set("tokenB", response.body.token);
+%}
+
+
+### 5. No token -> 401
+GET {{host}}/activities
+
+> {%
+    client.test("Missing token is rejected", () => {
+        client.assert(response.status === 401, "Expected 401, got " + response.status);
+    });
+%}
+
+### 6. Garbage token -> 401
+GET {{host}}/activities
+Authorization: Bearer not-a-jwt
+
+> {%
+    client.test("Garbage token is rejected", () => {
+        client.assert(response.status === 401, "Expected 401, got " + response.status);
+    });
+%}
+
+### 7. Tampered signature (valid token A + extra char) -> 401
+GET {{host}}/activities
+Authorization: Bearer {{tokenA}}x
+
+> {%
+    client.test("Tampered signature is rejected", () => {
+        client.assert(response.status === 401, "Expected 401, got " + response.status);
+    });
+%}
+
+### 8. Token signed with a different key (jwt.io sample, HS256) -> 401
+GET {{host}}/activities
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+
+> {%
+    client.test("Foreign key is rejected", () => {
+        client.assert(response.status === 401, "Expected 401, got " + response.status);
+    });
+%}
+
+### 9. alg:none attack (no signature) -> 401
+GET {{host}}/activities
+Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.
+
+> {%
+    client.test("Unsigned token is rejected", () => {
+        client.assert(response.status === 401, "Expected 401, got " + response.status);
+    });
+%}
+
+### 10. Wrong scheme (Basic instead of Bearer) -> 401
+GET {{host}}/activities
+Authorization: Basic {{tokenA}}
+
+> {%
+    client.test("Non-bearer scheme is rejected", () => {
+        client.assert(response.status === 401, "Expected 401, got " + response.status);
+    });
+%}
+
+
+
+
+### 11. Upload as user A -> 202 (409 on re-run, same file hash)
+POST {{host}}/activities
+Authorization: Bearer {{tokenA}}
+Content-Type: multipart/form-data; boundary=Boundary
+
+--Boundary
+Content-Disposition: form-data; name="file"; filename="ride.gpx"
+Content-Type: application/gpx+xml
+
+< ../../../tests/Cyclo.Core.Tests/TestData/Private/activity_23911368613.gpx
+--Boundary--
+
+> {%
+    client.test("Upload with token works (no more FK 500)", () => {
+        client.assert(response.status === 202 || response.status === 409, "Expected 202 or 409, got " + response.status);
+    });
+%}
+
+### 12. List as user A -> 200, save first activity id
+GET {{host}}/activities?pageSize=1
+Authorization: Bearer {{tokenA}}
+
+> {%
+    client.test("User A sees own activities", () => {
+        client.assert(response.status === 200, "Expected 200, got " + response.status);
+        client.assert(response.body.items.length === 1, "Expected 1 item");
+    });
+    client.global.set("activityA", response.body.items[0].id);
+%}
+
+### 13. Get own activity as user A -> 200
+GET {{host}}/activities/{{activityA}}
+Authorization: Bearer {{tokenA}}
+
+> {%
+    client.test("Owner can read activity", () => {
+        client.assert(response.status === 200, "Expected 200, got " + response.status);
+    });
+%}
+
+### 14. Get A's activity as user B -> 404 (not 403: don't reveal it exists)
+GET {{host}}/activities/{{activityA}}
+Authorization: Bearer {{tokenB}}
+
+> {%
+    client.test("Other user gets 404", () => {
+        client.assert(response.status === 404, "Expected 404, got " + response.status);
+    });
+%}
+
+### 15. List as user B -> 200, does not contain A's activity
+GET {{host}}/activities?pageSize=50
+Authorization: Bearer {{tokenB}}
+
+> {%
+    client.test("User B list has no A's activity", () => {
+        client.assert(response.status === 200, "Expected 200, got " + response.status);
+        const ids = response.body.items.map(x => x.id);
+        client.assert(!ids.includes(client.global.get("activityA")), "B sees A's activity!");
+    });
+%}

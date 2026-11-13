@@ -1,8 +1,11 @@
+using Cyclo.Api.Auth;
 using Cyclo.Api.Data;
 using Cyclo.Api.Data.Entities.Users;
-using Cyclo.Api.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +17,28 @@ builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton<IPasswordHasher<UserEntity>, PasswordHasher<UserEntity>>();
 builder.Services.AddSingleton<DummyPasswordHash>();
+builder.Services.AddOptions<JwtOptions>()
+    .BindConfiguration(JwtOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+builder.Services.AddSingleton<TokenService>();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<IOptions<JwtOptions>>((bearer, jwt) =>
+    {
+        bearer.MapInboundClaims = false;
+        bearer.IncludeErrorDetails = builder.Environment.IsDevelopment();
+        bearer.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidIssuer = jwt.Value.Issuer,
+            ValidAudience = jwt.Value.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(jwt.Value.Key)),
+            ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
+            NameClaimType = "sub",
+            RoleClaimType = "role"
+        };
+    });
+
 
 string connectionString = builder.Configuration.GetConnectionString("Cyclo") ??
                           throw new InvalidOperationException("no connection string");
@@ -33,6 +58,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();

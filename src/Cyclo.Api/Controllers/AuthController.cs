@@ -1,3 +1,4 @@
+using Cyclo.Api.Auth;
 using Cyclo.Api.Data;
 using Cyclo.Api.Data.Entities.Users;
 using Microsoft.AspNetCore.Identity;
@@ -5,13 +6,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Cyclo.Api.Contracts.Auth;
-using Cyclo.Api.Services;
 
 namespace Cyclo.Api.Controllers;
 
 [ApiController]
 [Route("auth")]
-public class AuthController(CycloDbContext dbContext, IPasswordHasher<UserEntity> hasher, DummyPasswordHash dummyHash) : ControllerBase
+public class AuthController(
+    IPasswordHasher<UserEntity> hasher,
+    CycloDbContext dbContext,
+    DummyPasswordHash dummyHash,
+    TokenService tokenService
+    ) : ControllerBase
 {
     [HttpPost("register")]
     [ProducesResponseType(StatusCodes.Status201Created)]
@@ -46,7 +51,7 @@ public class AuthController(CycloDbContext dbContext, IPasswordHasher<UserEntity
     
     
     [HttpPost("login")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<AccessToken>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Login(LoginRequest request, CancellationToken cancellationToken)
@@ -80,8 +85,8 @@ public class AuthController(CycloDbContext dbContext, IPasswordHasher<UserEntity
                 return loginProblem;
         }
         
-        // todo: return token
-        return Ok();
+        AccessToken token = tokenService.CreateToken(user);
+        return Ok(token);
     }
 }
 
