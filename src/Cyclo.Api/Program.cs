@@ -46,11 +46,11 @@ builder.Services.AddOptions<ActivityQueueOptions>()
     .ValidateOnStart();
 builder.Services.AddSingleton<ActivityQueue>();
 
-
 string connectionString = builder.Configuration.GetConnectionString("Cyclo") ??
                           throw new InvalidOperationException("no connection string");
-
 builder.Services.AddDbContext<CycloDbContext>(options => options.UseSqlServer(connectionString));
+
+builder.Services.AddHostedService<ActivityProcessingService>();
 
 WebApplication app = builder.Build();
 
