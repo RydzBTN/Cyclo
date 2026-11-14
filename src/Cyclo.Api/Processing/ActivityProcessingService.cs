@@ -8,11 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cyclo.Api.Processing;
 
-public class ActivityProcessingService(
+public class ActivityProcessingService
+(
     ActivityQueue queue,
     IServiceScopeFactory scopeFactory,
-    ILogger<ActivityProcessingService> logger
-    ) : BackgroundService
+    ILogger<ActivityProcessingService> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -38,7 +38,7 @@ public class ActivityProcessingService(
     {
         await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
         CycloDbContext db = scope.ServiceProvider.GetRequiredService<CycloDbContext>();
-
+        
         DateTimeOffset nowStarted = DateTimeOffset.UtcNow;
         
         int rows = await db.Activities
@@ -54,6 +54,7 @@ public class ActivityProcessingService(
             return;
         }
         logger.LogInformation("Activity {ActivityId} claimed", activityId);
+        
         
         byte[]? compressedFile = await db.ActivityFiles
             .Where(x => x.ActivityId == activityId)

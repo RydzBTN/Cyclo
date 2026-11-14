@@ -51,6 +51,7 @@ string connectionString = builder.Configuration.GetConnectionString("Cyclo") ??
 builder.Services.AddDbContext<CycloDbContext>(options => options.UseSqlServer(connectionString));
 
 builder.Services.AddHostedService<ActivityProcessingService>();
+builder.Services.AddHostedService<ActivityRecoveryService>();
 
 WebApplication app = builder.Build();
 

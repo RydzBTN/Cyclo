@@ -10,5 +10,11 @@ public class ActivityQueueOptions
     public int Capacity { get; set; }
     
     [Range(1, 3600)]
-    public int RetryAfterSeconds { get; set; } = 10;
+    public int RetryAfterSeconds { get; set; }
+    
+    [Range(1, 3600)] 
+    public int StuckProcessingTimeoutSeconds { get; set; }
+
+    [Range(1, 3600)] // < timeout
+    public int SweepIntervalSeconds { get; set; }
 }

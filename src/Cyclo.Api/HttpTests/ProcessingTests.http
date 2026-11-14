@@ -52,7 +52,7 @@ Authorization: Bearer {{procToken}}
 Content-Type: multipart/form-data; boundary=Boundary
 
 --Boundary
-Content-Disposition: form-data; name="file"; filename="10MB.gpx"
+Content-Disposition: form-data; name="file"; filename="ride.gpx"
 Content-Type: application/gpx+xml
 
 < ../../../tests/Cyclo.Core.Tests/TestData/Private/10MB.gpx
