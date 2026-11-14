@@ -46,7 +46,7 @@ public class CompressionTests(ITestOutputHelper output)
         } // compressor must be disposed before reading the destination
         return destination.ToArray();
     }
-
+    
     private static byte[] Decompress(string algorithm, byte[] data)
     {
         using var source = new MemoryStream(data);
@@ -57,7 +57,7 @@ public class CompressionTests(ITestOutputHelper output)
         decompressor.CopyTo(result);
         return result.ToArray();
     }
-
+    
     private static double MedianMs(Func<byte[]> action)
     {
         var times = new double[Runs];

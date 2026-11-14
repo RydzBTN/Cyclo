@@ -154,7 +154,7 @@ public class ActivityController(CycloDbContext dbContext, ActivityQueue activity
         
         await using (var stream = file.OpenReadStream())
         {
-            using var destination = new MemoryStream();
+            using MemoryStream destination = new MemoryStream();
             await using (Stream compressor = new GZipStream(destination, CompressionLevel.Optimal))
             {
                 await stream.CopyToAsync(compressor, cancellationToken);

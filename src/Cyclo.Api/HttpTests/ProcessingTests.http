@@ -1,0 +1,276 @@
+@host = http://localhost:5118
+
+# Background processing: upload -> GET until Completed / Failed.
+#
+# Run top to bottom. Request 1 creates a FRESH user on every run, so the
+# (UserId, FileHash) unique index never returns 409 for the same files.
+#
+# The HTTP client has no "wait" - processing takes milliseconds, so the GET
+# after an upload usually sees the final status. If a check fails with
+# "still Pending/Processing", just re-run that single GET.
+
+### 1. Register fresh user
+< {%
+    client.global.set("procEmail", "proc-" + Date.now() + "@cyclo.dev");
+%}
+POST {{host}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{procEmail}}",
+  "password": "tajnehaslo123"
+}
+
+> {%
+    client.test("Fresh user registered", () => {
+        client.assert(response.status === 201, "Expected 201, got " + response.status);
+    });
+%}
+
+### 2. Login -> save token
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{procEmail}}",
+  "password": "tajnehaslo123"
+}
+
+> {%
+    client.test("Login returns token", () => {
+        client.assert(response.status === 200, "Expected 200, got " + response.status);
+    });
+    client.global.set("procToken", response.body.token);
+%}
+
+
+### ========== Happy path: real Garmin file -> Completed ==========
+
+### 3. Upload real GPX -> 202
+POST {{host}}/activities
+Authorization: Bearer {{procToken}}
+Content-Type: multipart/form-data; boundary=Boundary
+
+--Boundary
+Content-Disposition: form-data; name="file"; filename="10MB.gpx"
+Content-Type: application/gpx+xml
+
+< ../../../tests/Cyclo.Core.Tests/TestData/Private/10MB.gpx
+--Boundary--
+
+> {%
+    client.test("Upload accepted", () => {
+        client.assert(response.status === 202, "Expected 202, got " + response.status);
+        client.assert(response.body.status === "Pending", "Expected Pending, got " + response.body.status);
+    });
+    client.global.set("okId", response.body.id);
+%}
+
+### 4. Real GPX -> Completed with a sensible summary
+GET {{host}}/activities/{{okId}}
+Authorization: Bearer {{procToken}}
+
+> {%
+    const a = response.body;
+    client.test("Processing finished", () => {
+        client.assert(a.status === "Completed", "Expected Completed, got " + a.status + " (re-run this GET if Pending/Processing)");
+    });
+    // Still running -> the checks below would only produce follow-up noise.
+    if (a.status === "Completed") {
+        client.test("Timestamps are set and ordered", () => {
+            client.assert(a.processingStartedAt && a.processingEndedAt, "Missing processing timestamps");
+            client.assert(new Date(a.processingStartedAt) >= new Date(a.uploadedAt), "Started before upload");
+            client.assert(new Date(a.processingEndedAt) >= new Date(a.processingStartedAt), "Ended before start");
+        });
+        client.test("No failure reason on success", () => {
+            client.assert(a.failureReason === null, "Unexpected failureReason: " + a.failureReason);
+        });
+        client.test("Summary has distance", () => {
+            client.assert(a.summary !== null, "Summary is null");
+            client.assert(a.summary.distanceMeters > 0, "Distance is 0");
+        });
+        // Guards against TimeSpan.Seconds (0-59) instead of TotalSeconds.
+        client.test("Total time is real total, not the seconds component", () => {
+            client.assert(a.summary.totalSeconds > 59, "totalSeconds = " + a.summary.totalSeconds + " - looks like TimeSpan.Seconds");
+            client.assert(a.summary.activitySeconds <= a.summary.totalSeconds, "Moving time longer than total time");
+        });
+    }
+%}
+
+
+### ========== Broken files -> Failed with a user-safe reason ==========
+
+### 5. Upload truncated XML -> 202
+POST {{host}}/activities
+Authorization: Bearer {{procToken}}
+Content-Type: multipart/form-data; boundary=Boundary
+
+--Boundary
+Content-Disposition: form-data; name="file"; filename="truncated.gpx"
+Content-Type: application/gpx+xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="test" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk><trkseg>
+    <trkpt lat="50.5" lon="17.25"><time>2026-08-09T08:15:11Z</time></trkpt>
+    <trkpt lat="50.6" lo
+--Boundary--
+
+> {%
+    client.test("Upload accepted", () => {
+        client.assert(response.status === 202, "Expected 202, got " + response.status);
+    });
+    client.global.set("truncatedId", response.body.id);
+%}
+
+### 6. Truncated XML -> Failed, reason mentions line, no internals leaked
+GET {{host}}/activities/{{truncatedId}}
+Authorization: Bearer {{procToken}}
+
+> {%
+    const a = response.body;
+    client.test("Marked as Failed", () => {
+        client.assert(a.status === "Failed", "Expected Failed, got " + a.status);
+    });
+    client.test("Reason is user-safe", () => {
+        client.assert(a.failureReason, "No failureReason");
+        client.assert(a.failureReason.toLowerCase().includes("line"), "Reason has no line info: " + a.failureReason);
+        client.assert(!a.failureReason.includes("System."), "Reason leaks .NET internals: " + a.failureReason);
+        client.assert(!a.failureReason.includes("Exception"), "Reason leaks exception type: " + a.failureReason);
+        client.assert(!/\n\s+at /.test(a.failureReason), "Reason looks like a stack trace: " + a.failureReason);
+    });
+    client.test("Failed has end time and no summary", () => {
+        client.assert(a.processingEndedAt, "Missing processingEndedAt");
+        client.assert(a.summary === null, "Failed activity has a summary");
+    });
+%}
+
+### 7. Upload GPX with invalid value (lat="abc") -> 202
+POST {{host}}/activities
+Authorization: Bearer {{procToken}}
+Content-Type: multipart/form-data; boundary=Boundary
+
+--Boundary
+Content-Disposition: form-data; name="file"; filename="bad-value.gpx"
+Content-Type: application/gpx+xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="test" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk><trkseg>
+    <trkpt lat="abc" lon="17.25"><time>2026-08-09T08:15:11Z</time></trkpt>
+    <trkpt lat="50.6" lon="17.35"><time>2026-08-09T08:15:12Z</time></trkpt>
+  </trkseg></trk>
+</gpx>
+--Boundary--
+
+> {%
+    client.global.set("badValueId", response.body.id);
+%}
+
+### 8. Invalid value -> Failed
+GET {{host}}/activities/{{badValueId}}
+Authorization: Bearer {{procToken}}
+
+> {%
+    client.test("Marked as Failed", () => {
+        client.assert(response.body.status === "Failed", "Expected Failed, got " + response.body.status);
+        client.assert(response.body.failureReason, "No failureReason");
+    });
+%}
+
+### 9. Upload GPX with DTD / XXE entity -> 202
+POST {{host}}/activities
+Authorization: Bearer {{procToken}}
+Content-Type: multipart/form-data; boundary=Boundary
+
+--Boundary
+Content-Disposition: form-data; name="file"; filename="xxe.gpx"
+Content-Type: application/gpx+xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gpx [ <!ENTITY xxe SYSTEM "file:///c:/windows/win.ini"> ]>
+<gpx version="1.1" creator="test" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk><trkseg><trkpt lat="50.5" lon="17.25"><time>&xxe;</time></trkpt></trkseg></trk>
+</gpx>
+--Boundary--
+
+> {%
+    client.global.set("xxeId", response.body.id);
+%}
+
+### 10. XXE file -> Failed, file content never reaches the response
+GET {{host}}/activities/{{xxeId}}
+Authorization: Bearer {{procToken}}
+
+> {%
+    client.test("Marked as Failed", () => {
+        client.assert(response.body.status === "Failed", "Expected Failed, got " + response.body.status);
+    });
+    client.test("No local file content in response", () => {
+        client.assert(!JSON.stringify(response.body).includes("[fonts]"), "win.ini content leaked!");
+    });
+%}
+
+
+### ========== Valid XML, not enough data -> Failed ==========
+
+### 11. Upload GPX with a single point -> 202
+POST {{host}}/activities
+Authorization: Bearer {{procToken}}
+Content-Type: multipart/form-data; boundary=Boundary
+
+--Boundary
+Content-Disposition: form-data; name="file"; filename="one-point.gpx"
+Content-Type: application/gpx+xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="test" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk><trkseg>
+    <trkpt lat="50.5" lon="17.25"><time>2026-08-09T08:15:11Z</time></trkpt>
+  </trkseg></trk>
+</gpx>
+--Boundary--
+
+> {%
+    client.global.set("onePointId", response.body.id);
+%}
+
+### 12. Single point -> Failed (must NOT stay in Processing)
+GET {{host}}/activities/{{onePointId}}
+Authorization: Bearer {{procToken}}
+
+> {%
+    client.test("Marked as Failed", () => {
+        client.assert(response.body.status === "Failed", "Expected Failed, got " + response.body.status);
+        client.assert(response.body.failureReason, "No failureReason");
+    });
+%}
+
+### 13. Upload GPX without track points -> 202
+POST {{host}}/activities
+Authorization: Bearer {{procToken}}
+Content-Type: multipart/form-data; boundary=Boundary
+
+--Boundary
+Content-Disposition: form-data; name="file"; filename="empty-track.gpx"
+Content-Type: application/gpx+xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="test" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk><trkseg></trkseg></trk>
+</gpx>
+--Boundary--
+
+> {%
+    client.global.set("emptyId", response.body.id);
+%}
+
+### 14. Empty track -> Failed (must NOT stay in Processing)
+GET {{host}}/activities/{{emptyId}}
+Authorization: Bearer {{procToken}}
+
+> {%
+    client.test("Marked as Failed", () => {
+        client.assert(response.body.status === "Failed", "Expected Failed, got " + response.body.status);
+    });
+%}

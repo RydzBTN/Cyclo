@@ -9,7 +9,12 @@ public static class GpxParser
     private static readonly XNamespace garmin = "http://www.garmin.com/xmlschemas/TrackPointExtension/v1";
     private static readonly XNamespace gpx = "http://www.topografix.com/GPX/1/1";
     
-    
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="stream"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidGpxException"></exception>
     public static IReadOnlyList<TrackPoint> ParseTrackPoints(Stream stream)
     {
         List<TrackPoint> points = new List<TrackPoint>();
@@ -29,7 +34,11 @@ public static class GpxParser
         }
         catch (XmlException ex)
         {
-            throw new InvalidGpxException($"Invalid XML at line {ex.LineNumber}", ex);
+            if (ex.LineNumber == 0) 
+                throw new InvalidGpxException($"Invalid XML", ex);
+            else 
+                throw new InvalidGpxException($"Invalid XML at line {ex.LineNumber}", ex);
+            
         }
         catch (Exception ex) when (ex is FormatException or OverflowException)
         {
