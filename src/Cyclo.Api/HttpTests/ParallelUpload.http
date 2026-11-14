@@ -1,0 +1,50 @@
+@host = http://localhost:5118
+
+### 1. Register fresh user
+< {%
+    client.global.set("upEmail", "up-" + Date.now() + "@cyclo.dev");
+%}
+POST {{host}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{upEmail}}",
+  "password": "tajnehaslo123"
+}
+
+### 2. Login -> save token
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{upEmail}}",
+  "password": "tajnehaslo123"
+}
+
+> {%
+    client.global.set("upToken", response.body.token);
+%}
+
+### 3. Upload 10MB.gpx
+POST {{host}}/activities
+Authorization: Bearer {{upToken}}
+Content-Type: multipart/form-data; boundary=Boundary
+
+--Boundary
+Content-Disposition: form-data; name="file"; filename="10MB.gpx"
+Content-Type: application/gpx+xml
+
+< ../../../tests/Cyclo.Core.Tests/TestData/Private/10MB.gpx
+--Boundary--
+
+### 4. Upload activity_23911368613.gpx
+POST {{host}}/activities
+Authorization: Bearer {{upToken}}
+Content-Type: multipart/form-data; boundary=Boundary
+
+--Boundary
+Content-Disposition: form-data; name="file"; filename="activity_23911368613.gpx"
+Content-Type: application/gpx+xml
+
+< ../../../tests/Cyclo.Core.Tests/TestData/Private/activity_23911368613.gpx
+--Boundary--

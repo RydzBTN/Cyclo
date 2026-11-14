@@ -14,24 +14,44 @@ public class ActivityProcessingService
     IServiceScopeFactory scopeFactory,
     ILogger<ActivityProcessingService> logger) : BackgroundService
 {
+    private const int MaxParallel = 8;
+    
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await foreach (Guid activityId in queue.ReadAllAsync(stoppingToken))
+        SemaphoreSlim semaphore = new SemaphoreSlim(MaxParallel);
+
+        try
         {
-            try
+            await foreach (Guid activityId in queue.ReadAllAsync(stoppingToken))
             {
-                await ProcessAsync(activityId, stoppingToken);
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
-                logger.LogInformation("Processing cancelled for {ActivityId}", activityId);
-                break;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Processing failed for {ActivityId}", activityId);
+                await semaphore.WaitAsync(stoppingToken);
+                _ = ProcessAndReleaseAsync(activityId, semaphore);
             }
         }
+        finally
+        {
+            for (int i = 0; i < MaxParallel; i++)
+            {
+                await semaphore.WaitAsync(CancellationToken.None);
+            }
+        }
+    }
+
+    private async Task ProcessAndReleaseAsync(Guid id,  SemaphoreSlim semaphore)
+    {
+        try
+        {
+            await ProcessAsync(id, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Processing failed for {ActivityId}", id);
+        }
+        finally
+        {
+            semaphore.Release();
+        }
+        
     }
     
     private async Task ProcessAsync(Guid activityId, CancellationToken cancellationToken)

@@ -53,12 +53,17 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie,  i surowy plik.
 | 1 | Core: `TrackPoint`, `GeoMath.HaversineMeters`, `GpxParser`, `ActivityAnalyzer` + testy (bez webu) |
 | 2 | API: upload/202/status, EF Core + migracje, JWT, walidacja, obsługa błędów, OpenAPI UI (Scalar/Swashbuckle) |
 | 3 | Channel + BackgroundService, odtwarzanie po restarcie, semafor, cancellation |
-| 4 | Frontend w React + TS - lista treningów i wykres trasy |
+| 4 | Frontend w React + TS - lista treningów |
 | 5 | Testcontainers (prawdziwy SQL Server), Docker Compose, GitHub Actions (build + test) |
 | 6 | Benchmark: `XDocument`+LINQ vs `XmlReader`+`ReadOnlySpan<char>` (`[MemoryDiagnoser]`), README z diagramem Mermaid i sekcją „Wyzwania i rozwiązania” |
 | 7 | Bufor. Opcjonalnie: jeden prosty deploy na Azure (Container Apps + Azure SQL) przez Azure CLI, z budżetem i alertem kosztów; po wszystkim usunięcie grupy zasobów |
 
 Świadomie POMIJAMY na tym etapie: CQRS/MediatR, Transactional Outbox, Dapper, Redis, mikroserwisy, pełną Clean Architecture.
+
+## Znane Problemy:
+- brak licznika prób przetwarzania aktywności - uszkodzony plik wraca do kolejki w nieskończoność
+- brak indeksu w Bazie danych na Status - baza musi przeskanować całą tabele co minute
+- do przemyślenia Task.Run w `ActivityProcessingService`
 
 ## Dziennik postępów
 
