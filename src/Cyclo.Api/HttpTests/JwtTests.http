@@ -1,4 +1,4 @@
-@host = http://localhost:5118
+@host = http://localhost:5118/api
 
 # Run top to bottom: requests 1-4 store tokens and activity id in global variables.
 # Register returns 201 on first run and 409 on re-runs - both are fine.

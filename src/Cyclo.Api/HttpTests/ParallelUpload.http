@@ -1,4 +1,4 @@
-@host = http://localhost:5118
+@host = http://localhost:5118/api
 
 ### 1. Register fresh user
 < {%

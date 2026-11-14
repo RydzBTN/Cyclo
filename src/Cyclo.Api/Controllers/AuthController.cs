@@ -10,7 +10,7 @@ using Cyclo.Api.Contracts.Auth;
 namespace Cyclo.Api.Controllers;
 
 [ApiController]
-[Route("auth")]
+[Route("api/auth")]
 public class AuthController(
     IPasswordHasher<UserEntity> hasher,
     CycloDbContext dbContext,

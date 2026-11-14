@@ -1,4 +1,4 @@
-@host = http://localhost:5118
+@host = http://localhost:5118/api
 
 # Background processing: upload -> GET until Completed / Failed.
 #

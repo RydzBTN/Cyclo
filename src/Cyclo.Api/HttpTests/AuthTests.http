@@ -1,5 +1,5 @@
 ### Succcesful register
-POST http://localhost:5118/auth/register
+POST http://localhost:5118/api/auth/register
 Content-Type: application/json
 
 {

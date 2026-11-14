@@ -16,7 +16,7 @@ namespace Cyclo.Api.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("activities")]
+[Route("api/activities")]
 public class ActivityController(CycloDbContext dbContext, ActivityQueue activityQueue) : ControllerBase
 {
     [HttpGet("{id:guid}")]
