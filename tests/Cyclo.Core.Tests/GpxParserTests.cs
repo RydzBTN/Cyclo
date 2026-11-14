@@ -183,7 +183,7 @@ public class GpxParserTests
 
     // A corrupted upload must fail loudly, not look like an empty ride.
     [Fact]
-    public void Parse_TruncatedXml_ThrowsXmlException()
+    public void Parse_TruncatedXml_ThrowsInvalidGpxWithXmlInner()
     {
         const string truncated = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -194,7 +194,60 @@ public class GpxParserTests
                   <trkpt lat="50.6" lo
             """;
 
-        Assert.Throws<XmlException>(() => GpxParser.ParseTrackPoints(ToStream(truncated)));
+        var ex = Assert.Throws<InvalidGpxException>(() => GpxParser.ParseTrackPoints(ToStream(truncated)));
+
+        Assert.IsType<XmlException>(ex.InnerException);
+        Assert.Contains("line", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // DtdProcessing.Prohibit is the XXE guard – a file with a DTD must be rejected, not expanded.
+    [Fact]
+    public void Parse_FileWithDtd_ThrowsInvalidGpx()
+    {
+        const string withDtd = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE gpx [ <!ENTITY xxe SYSTEM "file:///c:/windows/win.ini"> ]>
+            <gpx version="1.1" creator="test" xmlns="http://www.topografix.com/GPX/1/1">
+              <trk><trkseg><trkpt lat="50.5" lon="17.25"><time>&xxe;</time></trkpt></trkseg></trk>
+            </gpx>
+            """;
+
+        var ex = Assert.Throws<InvalidGpxException>(() => GpxParser.ParseTrackPoints(ToStream(withDtd)));
+
+        Assert.IsType<XmlException>(ex.InnerException);
+    }
+
+    // Well-formed XML, but a value that cannot be converted – a broken file, not a skipped point.
+    [Theory]
+    [InlineData("""<trkpt lat="abc" lon="17.25"><time>2026-08-09T08:15:11Z</time></trkpt>""")]
+    [InlineData("""<trkpt lat="50.5" lon="17.25"><time>yesterday</time></trkpt>""")]
+    [InlineData("""<trkpt lat="50.5" lon="17.25"><ele>high</ele><time>2026-08-09T08:15:11Z</time></trkpt>""")]
+    public void Parse_InvalidValue_ThrowsInvalidGpxWithFormatInner(string brokenPoint)
+    {
+        string gpx = WrapInGpx(brokenPoint);
+
+        var ex = Assert.Throws<InvalidGpxException>(() => GpxParser.ParseTrackPoints(ToStream(gpx)));
+
+        Assert.IsType<FormatException>(ex.InnerException);
+    }
+
+    [Fact]
+    public void Parse_HeartRateOutOfIntRange_ThrowsInvalidGpxWithOverflowInner()
+    {
+        string gpx = WrapInGpx("""
+            <trkpt lat="50.5" lon="17.25">
+              <time>2026-08-09T08:15:11Z</time>
+              <extensions>
+                <ns3:TrackPointExtension>
+                  <ns3:hr>99999999999</ns3:hr>
+                </ns3:TrackPointExtension>
+              </extensions>
+            </trkpt>
+            """, extraNamespaces: $"""xmlns:ns3="{GarminTpxNamespace}" """);
+
+        var ex = Assert.Throws<InvalidGpxException>(() => GpxParser.ParseTrackPoints(ToStream(gpx)));
+
+        Assert.IsType<OverflowException>(ex.InnerException);
     }
 
     // On a Polish Windows the decimal separator is a comma; parsing must not depend on that.
