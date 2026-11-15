@@ -1,0 +1,137 @@
+@host = http://localhost:5118/api
+
+# Run top to bottom. Cookie jar is disabled on every request,
+# so cookies are sent explicitly - the test controls exactly what the server receives.
+
+### 1. Register user
+# @no-cookie-jar
+POST {{host}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "cookie@cyclo.dev",
+  "password": "tajnehaslo123"
+}
+
+> {%
+    client.test("User registered or already exists", () => {
+        client.assert(response.status === 201 || response.status === 409, "Expected 201 or 409, got " + response.status);
+    });
+%}
+
+### 2. Login -> Set-Cookie with secure flags, no token in body
+# @no-cookie-jar
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "cookie@cyclo.dev",
+  "password": "tajnehaslo123"
+}
+
+> {%
+    const setCookie = (response.headers.valueOf("Set-Cookie") || "");
+    const lower = setCookie.toLowerCase();
+
+    client.test("Login returns 200 with user data", () => {
+        client.assert(response.status === 200, "Expected 200, got " + response.status);
+        client.assert(response.body.email === "cookie@cyclo.dev", "Wrong email in body");
+        client.assert(response.body.expiresAt, "No expiresAt in body");
+    });
+    client.test("Token is NOT in response body", () => {
+        client.assert(response.body.token === undefined, "Token leaked into body");
+    });
+    client.test("Cookie has HttpOnly, Secure, SameSite=Strict, Path=/api", () => {
+        client.assert(lower.includes("httponly"), "Missing HttpOnly");
+        client.assert(lower.includes("secure"), "Missing Secure");
+        client.assert(lower.includes("samesite=strict"), "Missing SameSite=Strict");
+        client.assert(lower.includes("path=/api"), "Missing Path=/api");
+    });
+
+    // "name=value; expires=...; path=..." -> take "name=value"
+    client.global.set("authCookie", setCookie.split(";")[0]);
+    client.global.set("rawToken", setCookie.split(";")[0].split("=")[1]);
+%}
+
+### 3. Me with cookie -> 200
+# @no-cookie-jar
+GET {{host}}/auth/me
+Cookie: {{authCookie}}
+
+> {%
+    client.test("Me with cookie returns current user", () => {
+        client.assert(response.status === 200, "Expected 200, got " + response.status);
+        client.assert(response.body.email === "cookie@cyclo.dev", "Wrong email");
+    });
+%}
+
+### 4. Me with Authorization header (fallback, no cookie) -> 200
+# @no-cookie-jar
+GET {{host}}/auth/me
+Authorization: Bearer {{rawToken}}
+
+> {%
+    client.test("Bearer header still works", () => {
+        client.assert(response.status === 200, "Expected 200, got " + response.status);
+    });
+%}
+
+### 5. Me without anything -> 401
+# @no-cookie-jar
+GET {{host}}/auth/me
+
+> {%
+    client.test("Anonymous gets 401", () => {
+        client.assert(response.status === 401, "Expected 401, got " + response.status);
+    });
+%}
+
+### 6. Me with garbage cookie -> 401
+# @no-cookie-jar
+GET {{host}}/auth/me
+Cookie: token=not-a-jwt
+
+> {%
+    client.test("Garbage cookie is rejected", () => {
+        client.assert(response.status === 401, "Expected 401, got " + response.status);
+    });
+%}
+
+### 7. Logout -> 204 + expired Set-Cookie
+# @no-cookie-jar
+POST {{host}}/auth/logout
+Cookie: {{authCookie}}
+
+> {%
+    const lower = (response.headers.valueOf("Set-Cookie") || "").toLowerCase();
+    client.test("Logout returns 204", () => {
+        client.assert(response.status === 204, "Expected 204, got " + response.status);
+    });
+    client.test("Logout expires the cookie on the same path", () => {
+        client.assert(lower.includes("expires=thu, 01 jan 1970"), "Cookie not expired: " + lower);
+        client.assert(lower.includes("path=/api"), "Delete uses different path - browser would keep the cookie");
+    });
+%}
+
+### 8. Logout when already logged out -> 204 (idempotent)
+# @no-cookie-jar
+POST {{host}}/auth/logout
+
+> {%
+    client.test("Logout is idempotent", () => {
+        client.assert(response.status === 204, "Expected 204, got " + response.status);
+    });
+%}
+
+### 9. KNOWN ISSUE: old token after logout still works -> 200
+# Logout only removes the cookie in the browser. JWT is stateless, so a copied
+# token stays valid until expiresAt. This test documents that, it is not a goal.
+# @no-cookie-jar
+GET {{host}}/auth/me
+Cookie: {{authCookie}}
+
+> {%
+    client.test("Stolen token survives logout (known issue)", () => {
+        client.assert(response.status === 200, "Expected 200, got " + response.status);
+    });
+%}

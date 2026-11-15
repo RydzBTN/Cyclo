@@ -38,6 +38,14 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
             NameClaimType = "sub",
             RoleClaimType = "role"
         };
+        bearer.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                context.Token = context.Request.Cookies[TokenCookieOptions.AccessTokenCookieName] ?? null;
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddOptions<ActivityQueueOptions>()

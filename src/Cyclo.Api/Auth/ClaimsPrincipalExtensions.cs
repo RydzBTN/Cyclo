@@ -13,4 +13,14 @@ public static class ClaimsPrincipalExtensions
         
         return id;
     }
+    
+    public static DateTimeOffset GetExpiresAt(this ClaimsPrincipal user)
+    {
+        if (!long.TryParse(user.FindFirstValue(JwtRegisteredClaimNames.Exp), out long seconds))
+        {
+            throw new InvalidOperationException("Authenticated user has no valid 'exp' claim");
+        }
+        
+        return DateTimeOffset.FromUnixTimeSeconds(seconds);
+    }
 }

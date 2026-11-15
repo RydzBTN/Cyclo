@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Cyclo.Api.Contracts.Auth;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Cyclo.Api.Controllers;
 
@@ -51,13 +52,13 @@ public class AuthController(
     
     
     [HttpPost("login")]
-    [ProducesResponseType<AccessToken>(StatusCodes.Status200OK)]
+    [ProducesResponseType<CurrentUserResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Login(LoginRequest request, CancellationToken cancellationToken)
     {
         string email = request.Email.Trim().ToLowerInvariant();
-
+        
         UserEntity? user = await dbContext.Users.SingleOrDefaultAsync(x => x.Email == email, cancellationToken);
         
         ObjectResult loginProblem = Problem(statusCode: StatusCodes.Status401Unauthorized, detail: "Invalid email or password");
@@ -76,7 +77,7 @@ public class AuthController(
                 user.PasswordHash = hasher.HashPassword(user, request.Password);
                 await dbContext.SaveChangesAsync(cancellationToken);
                 break;
-            case PasswordVerificationResult.Success: 
+            case PasswordVerificationResult.Success:
                 break;
             
             case PasswordVerificationResult.Failed:
@@ -86,7 +87,40 @@ public class AuthController(
         }
         
         AccessToken token = tokenService.CreateToken(user);
-        return Ok(token);
+        CookieOptions cookieOptions = TokenCookieOptions.GetBaseTokenCookieOptions();
+        cookieOptions.Expires = token.ExpiresAt;
+        Response.Cookies.Append(TokenCookieOptions.AccessTokenCookieName, token.Token, cookieOptions);
+        
+        return Ok(new CurrentUserResponse(user.Email, token.ExpiresAt));
+    }
+    
+    [Authorize]
+    [HttpGet("me")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType<CurrentUserResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> WhoAmI(CancellationToken cancellationToken)
+    {
+        Guid userId = User.GetUserId();
+        DateTimeOffset expiresAt = User.GetExpiresAt();
+
+        string? userEmail = await dbContext.Users
+            .Where(x => x.Id == userId)
+            .Select(x => x.Email)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (userEmail == null) return Unauthorized();
+        
+        return Ok(new CurrentUserResponse(userEmail, expiresAt));
+    }
+    
+    [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public IActionResult Logout()
+    {
+        Response.Cookies.Delete(TokenCookieOptions.AccessTokenCookieName, 
+            TokenCookieOptions.GetBaseTokenCookieOptions());
+        
+        return NoContent();
     }
 }
 

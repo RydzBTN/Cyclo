@@ -64,6 +64,7 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie,  i surowy plik.
 - brak licznika prób przetwarzania aktywności - uszkodzony plik wraca do kolejki w nieskończoność
 - brak indeksu w Bazie danych na Status - baza musi przeskanować całą tabele co minute
 - do przemyślenia Task.Run w `ActivityProcessingService`
+- wylogowanie kasuje cookie ale token jest ciągle ważny po stronie serwera
 
 ## Dziennik postępów
 
@@ -141,8 +142,16 @@ Punkty GPS nie trafiają do bazy – tylko podsumowanie,  i surowy plik.
 - opcje kolejki `AddOptions<ActivityQueueOptions>()`
 - kolejka dla obliczania podsumowania aktywności dla procesu w tle jako singleton `AddSingleton<ActivityQueue>();`
 - dodawanie do kolejki w `UploadActivity`
-- 
 
+### Dzień 12
+- Token JWT w Cookie HttpOnly, Secure, SameSite(Strict), Path("/api").
+- wczytanie tokena z cookie w `bearer.Events` w `program.cs`
+- nowy endpoint POST logout
+- nowy endpoint Get me
+- nowa klasa statyczna `TokenCookieOptions` zapewniająca ustawienia i nazwe dla tokena w cookies
+- Nowe testy CookieAuthTests.http dla tokena w ciasteczkach
+- usunięte testy ze starymi opcjami logowania/tokena
+ 
 
 
 
